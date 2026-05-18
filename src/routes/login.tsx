@@ -49,8 +49,8 @@ function LoginPage() {
         toast.success("Welcome back");
         navigate({ to: "/dashboard" });
       }
-    } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -84,12 +84,7 @@ function LoginPage() {
               : "Start your group's ledger in minutes."}
           </p>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-6 w-full"
-            onClick={google}
-          >
+          <Button type="button" variant="outline" className="mt-6 w-full" onClick={google}>
             Continue with Google
           </Button>
 
