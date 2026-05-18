@@ -34,23 +34,23 @@ function LoginPage() {
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: fullName },
+            data: { full_name: fullName.trim() },
           },
         });
         if (error) throw error;
         toast.success("Account created. Check your email to confirm.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
         toast.success("Welcome back");
         navigate({ to: "/dashboard" });
       }
-    } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -84,12 +84,7 @@ function LoginPage() {
               : "Start your group's ledger in minutes."}
           </p>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-6 w-full"
-            onClick={google}
-          >
+          <Button type="button" variant="outline" className="mt-6 w-full" onClick={google}>
             Continue with Google
           </Button>
 
@@ -117,6 +112,7 @@ function LoginPage() {
                 id="email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -128,6 +124,7 @@ function LoginPage() {
                 type="password"
                 required
                 minLength={6}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
