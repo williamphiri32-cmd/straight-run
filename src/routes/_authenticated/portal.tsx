@@ -377,7 +377,8 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="t">Term (months)</Label>
-                <Input id="t" type="number" min="1" max="60" required value={term} onChange={(e) => setTerm(e.target.value)} />
+                <Input id="t" type="number" min="1" max={maxTenure} required value={term} onChange={(e) => setTerm(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">Max tenure: {maxTenure} months</p>
               </div>
             </div>
             <div className="space-y-1.5">
