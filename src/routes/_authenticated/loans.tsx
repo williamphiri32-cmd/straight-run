@@ -48,6 +48,19 @@ function LoansPage() {
     },
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ["group-settings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("group_settings")
+        .select("default_interest_rate, default_penalty_rate")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const { data: loans } = useQuery({
     queryKey: ["loans", user?.id],
     enabled: !!user,
@@ -58,6 +71,27 @@ function LoansPage() {
         .order("issued_date", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: applications } = useQuery({
+    queryKey: ["loan-applications-on-loans", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [appsRes, membersRes] = await Promise.all([
+        supabase
+          .from("loan_applications")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase.from("members").select("id, name"),
+      ]);
+      const nameMap = new Map(
+        (membersRes.data ?? []).map((m: any) => [m.id, m.name]),
+      );
+      return (appsRes.data ?? []).map((a: any) => ({
+        ...a,
+        member_name: nameMap.get(a.member_id) ?? "—",
+      }));
     },
   });
 
