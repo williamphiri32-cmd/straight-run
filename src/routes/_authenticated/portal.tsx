@@ -17,7 +17,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock } from "lucide-react";
+import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
 import { computeLoanStats, projectShareOut } from "@/lib/penalty";
