@@ -186,7 +186,7 @@ function PortalPage() {
         />
       </div>
 
-      <ApplyForLoanCard memberId={me.id} groupId={me.user_id} />
+      <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} />
 
       <Card className="p-5">
         <h2 className="font-display text-lg font-semibold">My loans</h2>
