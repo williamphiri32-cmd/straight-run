@@ -37,7 +37,7 @@ function PortalPage() {
     queryKey: ["portal", user?.id, me?.id],
     enabled: !!me && !!groupId,
     queryFn: async () => {
-      const [contribsRes, loansRes, repaysRes, appsRes, allocRes, allMembersRes] =
+      const [contribsRes, loansRes, repaysRes, appsRes, allocRes, allMembersRes, settingsRes, limitRes] =
         await Promise.all([
           supabase.from("contributions").select("*").eq("user_id", groupId!),
           supabase.from("loans").select("*").eq("user_id", groupId!),
@@ -49,6 +49,8 @@ function PortalPage() {
             .order("created_at", { ascending: false }),
           supabase.from("share_out_allocations").select("*").eq("user_id", groupId!),
           supabase.from("members").select("id, name").eq("user_id", groupId!),
+          supabase.from("group_settings").select("default_max_tenure_months").eq("user_id", groupId!).maybeSingle(),
+          supabase.from("member_loan_limits").select("max_tenure_months").eq("user_id", groupId!).eq("member_id", me!.id).maybeSingle(),
         ]);
       return {
         contributions: contribsRes.data ?? [],
@@ -57,6 +59,10 @@ function PortalPage() {
         applications: appsRes.data ?? [],
         allocations: allocRes.data ?? [],
         allMembers: allMembersRes.data ?? [],
+        maxTenure:
+          limitRes.data?.max_tenure_months ??
+          settingsRes.data?.default_max_tenure_months ??
+          12,
       };
     },
   });
