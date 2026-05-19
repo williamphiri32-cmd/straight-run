@@ -286,13 +286,19 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
     e.preventDefault();
     if (!user) return;
     const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return toast.error("Enter a valid amount");
+    }
+    if (amt > owed + 0.005) {
+      return toast.error(`Amount exceeds outstanding balance (${money(owed)})`);
+    }
     const { error } = await supabase.from("repayments").insert({
       user_id: user.id,
       loan_id: loanId,
       amount: amt,
     });
     if (error) return toast.error(error.message);
-    if (amt >= owed) {
+    if (amt >= owed - 0.005) {
       await supabase.from("loans").update({ status: "paid" }).eq("id", loanId);
     }
     toast.success("Repayment recorded");
@@ -314,7 +320,8 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="ra">Amount (owed: {money(owed)})</Label>
-            <Input id="ra" type="number" min="0" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <Input id="ra" type="number" min="0" max={owed.toFixed(2)} step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground">Maximum: {money(owed)}</p>
           </div>
           <DialogFooter>
             <Button type="submit" className="gap-2">
