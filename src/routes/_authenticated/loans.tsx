@@ -369,6 +369,10 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
             <Input id="ra" type="number" min="0" max={owed.toFixed(2)} step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
             <p className="text-[11px] text-muted-foreground">Maximum: {money(owed)}</p>
           </div>
+          <div className="space-y-1.5">
+            <Label>Payment method</Label>
+            <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
+          </div>
           <DialogFooter>
             <Button type="submit" className="gap-2">
               <Plus className="h-4 w-4" /> Record
