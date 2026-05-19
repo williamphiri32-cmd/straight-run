@@ -390,6 +390,10 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
               </div>
             </div>
             <div className="space-y-1.5">
+              <Label>Payment method</Label>
+              <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="p">Purpose</Label>
               <Textarea id="p" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="What is this loan for?" />
             </div>
