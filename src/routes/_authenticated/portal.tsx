@@ -186,7 +186,10 @@ function PortalPage() {
         />
       </div>
 
-      <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <ContributeCard memberId={me.id} groupId={me.user_id} />
+        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} />
+      </div>
 
       <Card className="p-5">
         <h2 className="font-display text-lg font-semibold">My loans</h2>
