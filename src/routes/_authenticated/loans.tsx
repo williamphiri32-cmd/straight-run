@@ -116,12 +116,13 @@ function LoansPage() {
       member_id: memberId,
       principal: Number(principal),
       interest_rate: Number(rate),
+      penalty_rate: Number(settings?.default_penalty_rate ?? 5) / 100,
       due_date: dueDate || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Loan issued");
     setOpen(false);
-    setMemberId(""); setPrincipal(""); setRate("0"); setDueDate("");
+    setMemberId(""); setPrincipal(""); setDueDate("");
     qc.invalidateQueries({ queryKey: ["loans"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
