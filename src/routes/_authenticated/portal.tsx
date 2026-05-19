@@ -462,6 +462,9 @@ function ContributeCard({ memberId, groupId, mySavings }: { memberId: string; gr
         <p className="text-sm text-muted-foreground">
           Add to your cumulative savings in the group.
         </p>
+        <p className="mt-2 text-sm">
+          Total saved: <strong className="font-display tabular-nums text-foreground">{money(mySavings)}</strong>
+        </p>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
