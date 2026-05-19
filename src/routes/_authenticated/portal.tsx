@@ -376,6 +376,38 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: str
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={insufficientOpen} onOpenChange={setInsufficientOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> Not enough funds
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p>
+              Your group doesn't have enough available funds to cover this loan.
+            </p>
+            <div className="rounded-md bg-muted p-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Requested</span>
+                <span className="font-medium tabular-nums">{money(Number(amount) || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Available</span>
+                <span className="font-medium tabular-nums">{money(availableFunds)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Available funds = total contributions − outstanding loans − pending applications.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInsufficientOpen(false)}>Close</Button>
+            <Button onClick={() => { setInsufficientOpen(false); setOpen(true); }}>Adjust amount</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
