@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const { session, loading, signOut, user } = useAuth();
-  const { isTreasurer, isMember } = useRole();
+  const { isTreasurer } = useRole();
   const navigate = useNavigate();
   const { location } = useRouterState();
 
