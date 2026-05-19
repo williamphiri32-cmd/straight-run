@@ -25,6 +25,7 @@ import {
 import { Banknote, Plus, ArrowDownToLine } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
+import { PaymentMethodSelect, PaymentMethodIcon, type PaymentMethod } from "@/components/payment-method-select";
 
 export const Route = createFileRoute("/_authenticated/loans")({
   head: () => ({ meta: [{ title: "Loans — Kijiji" }] }),
