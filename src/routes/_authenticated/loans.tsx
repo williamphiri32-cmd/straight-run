@@ -320,7 +320,8 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="ra">Amount (owed: {money(owed)})</Label>
-            <Input id="ra" type="number" min="0" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <Input id="ra" type="number" min="0" max={owed.toFixed(2)} step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground">Maximum: {money(owed)}</p>
           </div>
           <DialogFooter>
             <Button type="submit" className="gap-2">
