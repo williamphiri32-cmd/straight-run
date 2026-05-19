@@ -101,6 +101,13 @@ function LoansPage() {
   const [rate, setRate] = useState("0");
   const [dueDate, setDueDate] = useState("");
 
+  // Sync interest default from group settings
+  useEffect(() => {
+    if (settings?.default_interest_rate != null) {
+      setRate(String(settings.default_interest_rate));
+    }
+  }, [settings?.default_interest_rate]);
+
   const issue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !memberId) return;
