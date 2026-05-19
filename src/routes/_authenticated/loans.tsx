@@ -116,6 +116,7 @@ function LoansPage() {
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("0");
   const [dueDate, setDueDate] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   // Sync interest default from group settings
   useEffect(() => {
@@ -133,6 +134,9 @@ function LoansPage() {
     if (!Number.isFinite(amt) || amt <= 0) {
       return toast.error("Enter a valid amount");
     }
+    if (!paymentMethod) {
+      return toast.error("Select a payment method");
+    }
     if (amt > available + 0.005) {
       return toast.error(`Insufficient group balance. Available: ${money(available)}`);
     }
@@ -143,11 +147,12 @@ function LoansPage() {
       interest_rate: Number(rate),
       penalty_rate: Number(settings?.default_penalty_rate ?? 5) / 100,
       due_date: dueDate || null,
+      payment_method: paymentMethod,
     });
     if (error) return toast.error(error.message);
     toast.success("Loan issued");
     setOpen(false);
-    setMemberId(""); setPrincipal(""); setDueDate("");
+    setMemberId(""); setPrincipal(""); setDueDate(""); setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["loans"] });
     qc.invalidateQueries({ queryKey: ["group-balance"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
