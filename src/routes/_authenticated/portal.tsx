@@ -17,6 +17,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { PaymentMethodSelect, type PaymentMethod } from "@/components/payment-method-select";
 import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
@@ -317,11 +318,16 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("3");
   const [purpose, setPurpose] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(amount);
     const termNum = Number(term);
+    if (!paymentMethod) {
+      toast.error("Select a payment method");
+      return;
+    }
     if (termNum > maxTenure) {
       toast.error(`Max loan tenure for you is ${maxTenure} months`);
       return;
@@ -337,6 +343,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
       amount: amt,
       term_months: Number(term),
       purpose: purpose || null,
+      payment_method: paymentMethod,
       status: "pending",
     });
     if (error) return toast.error(error.message);
@@ -345,6 +352,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
     setAmount("");
     setTerm("3");
     setPurpose("");
+    setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["portal"] });
     qc.invalidateQueries({ queryKey: ["applications"] });
   };
@@ -380,6 +388,10 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
                 <Input id="t" type="number" min="1" max={maxTenure} required value={term} onChange={(e) => setTerm(e.target.value)} />
                 <p className="text-[11px] text-muted-foreground">Max tenure: {maxTenure} months</p>
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Payment method</Label>
+              <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="p">Purpose</Label>
@@ -432,6 +444,7 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -439,12 +452,14 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return toast.error("Enter a valid amount");
     if (amt > 10_000_000) return toast.error("Amount too large");
+    if (!paymentMethod) return toast.error("Select a payment method");
     setSubmitting(true);
     const { error } = await supabase.from("contributions").insert({
       user_id: groupId,
       member_id: memberId,
       amount: amt,
       note: note.trim() ? note.trim().slice(0, 500) : null,
+      payment_method: paymentMethod,
     });
     setSubmitting(false);
     if (error) return toast.error(error.message);
@@ -452,6 +467,7 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
     setOpen(false);
     setAmount("");
     setNote("");
+    setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["portal"] });
   };
 
@@ -491,6 +507,10 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Payment method</Label>
+              <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="c-note">Note (optional)</Label>

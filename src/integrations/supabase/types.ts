@@ -22,6 +22,7 @@ export type Database = {
           id: string
           member_id: string
           note: string | null
+          payment_method: string | null
           user_id: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           member_id: string
           note?: string | null
+          payment_method?: string | null
           user_id: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           id?: string
           member_id?: string
           note?: string | null
+          payment_method?: string | null
           user_id?: string
         }
         Relationships: [
@@ -93,6 +96,7 @@ export type Database = {
           decision_note: string | null
           id: string
           member_id: string
+          payment_method: string | null
           purpose: string | null
           status: Database["public"]["Enums"]["loan_application_status"]
           term_months: number
@@ -105,6 +109,7 @@ export type Database = {
           decision_note?: string | null
           id?: string
           member_id: string
+          payment_method?: string | null
           purpose?: string | null
           status?: Database["public"]["Enums"]["loan_application_status"]
           term_months?: number
@@ -117,6 +122,7 @@ export type Database = {
           decision_note?: string | null
           id?: string
           member_id?: string
+          payment_method?: string | null
           purpose?: string | null
           status?: Database["public"]["Enums"]["loan_application_status"]
           term_months?: number
@@ -134,6 +140,7 @@ export type Database = {
           issued_date: string
           member_id: string
           note: string | null
+          payment_method: string | null
           penalty_period_days: number
           penalty_rate: number
           principal: number
@@ -149,6 +156,7 @@ export type Database = {
           issued_date?: string
           member_id: string
           note?: string | null
+          payment_method?: string | null
           penalty_period_days?: number
           penalty_rate?: number
           principal: number
@@ -164,6 +172,7 @@ export type Database = {
           issued_date?: string
           member_id?: string
           note?: string | null
+          payment_method?: string | null
           penalty_period_days?: number
           penalty_rate?: number
           principal?: number
@@ -279,6 +288,7 @@ export type Database = {
           id: string
           loan_id: string
           paid_date: string
+          payment_method: string | null
           user_id: string
         }
         Insert: {
@@ -287,6 +297,7 @@ export type Database = {
           id?: string
           loan_id: string
           paid_date?: string
+          payment_method?: string | null
           user_id: string
         }
         Update: {
@@ -295,6 +306,7 @@ export type Database = {
           id?: string
           loan_id?: string
           paid_date?: string
+          payment_method?: string | null
           user_id?: string
         }
         Relationships: [

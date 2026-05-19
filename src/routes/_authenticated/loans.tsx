@@ -25,6 +25,7 @@ import {
 import { Banknote, Plus, ArrowDownToLine } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
+import { PaymentMethodSelect, PaymentMethodIcon, type PaymentMethod } from "@/components/payment-method-select";
 
 export const Route = createFileRoute("/_authenticated/loans")({
   head: () => ({ meta: [{ title: "Loans — Kijiji" }] }),
@@ -115,6 +116,7 @@ function LoansPage() {
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("0");
   const [dueDate, setDueDate] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   // Sync interest default from group settings
   useEffect(() => {
@@ -132,6 +134,9 @@ function LoansPage() {
     if (!Number.isFinite(amt) || amt <= 0) {
       return toast.error("Enter a valid amount");
     }
+    if (!paymentMethod) {
+      return toast.error("Select a payment method");
+    }
     if (amt > available + 0.005) {
       return toast.error(`Insufficient group balance. Available: ${money(available)}`);
     }
@@ -142,11 +147,12 @@ function LoansPage() {
       interest_rate: Number(rate),
       penalty_rate: Number(settings?.default_penalty_rate ?? 5) / 100,
       due_date: dueDate || null,
+      payment_method: paymentMethod,
     });
     if (error) return toast.error(error.message);
     toast.success("Loan issued");
     setOpen(false);
-    setMemberId(""); setPrincipal(""); setDueDate("");
+    setMemberId(""); setPrincipal(""); setDueDate(""); setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["loans"] });
     qc.invalidateQueries({ queryKey: ["group-balance"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
@@ -197,6 +203,10 @@ function LoansPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="d">Due date (optional)</Label>
                 <Input id="d" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Payment method</Label>
+                <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
               </div>
               <DialogFooter>
                 <Button type="submit">Issue loan</Button>
@@ -275,6 +285,9 @@ function LoansPage() {
                       }`}>
                         {fullyPaid ? "paid" : l.status}
                       </span>
+                      {l.payment_method && (
+                        <PaymentMethodIcon method={l.payment_method} className="h-5 w-5" />
+                      )}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Issued {fmtDate(l.issued_date)} · {Number(l.interest_rate)}% interest ({money(interest)})
@@ -307,6 +320,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -315,6 +329,9 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
     if (!Number.isFinite(amt) || amt <= 0) {
       return toast.error("Enter a valid amount");
     }
+    if (!paymentMethod) {
+      return toast.error("Select a payment method");
+    }
     if (amt > owed + 0.005) {
       return toast.error(`Amount exceeds outstanding balance (${money(owed)})`);
     }
@@ -322,6 +339,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
       user_id: user.id,
       loan_id: loanId,
       amount: amt,
+      payment_method: paymentMethod,
     });
     if (error) return toast.error(error.message);
     if (amt >= owed - 0.005) {
@@ -329,6 +347,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
     }
     toast.success("Repayment recorded");
     setAmount("");
+    setPaymentMethod("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["loans"] });
     qc.invalidateQueries({ queryKey: ["group-balance"] });
@@ -349,6 +368,10 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
             <Label htmlFor="ra">Amount (owed: {money(owed)})</Label>
             <Input id="ra" type="number" min="0" max={owed.toFixed(2)} step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
             <p className="text-[11px] text-muted-foreground">Maximum: {money(owed)}</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Payment method</Label>
+            <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
           </div>
           <DialogFooter>
             <Button type="submit" className="gap-2">
