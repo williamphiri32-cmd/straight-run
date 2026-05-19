@@ -320,6 +320,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,6 +329,9 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
     if (!Number.isFinite(amt) || amt <= 0) {
       return toast.error("Enter a valid amount");
     }
+    if (!paymentMethod) {
+      return toast.error("Select a payment method");
+    }
     if (amt > owed + 0.005) {
       return toast.error(`Amount exceeds outstanding balance (${money(owed)})`);
     }
@@ -335,6 +339,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
       user_id: user.id,
       loan_id: loanId,
       amount: amt,
+      payment_method: paymentMethod,
     });
     if (error) return toast.error(error.message);
     if (amt >= owed - 0.005) {
@@ -342,6 +347,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
     }
     toast.success("Repayment recorded");
     setAmount("");
+    setPaymentMethod("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["loans"] });
     qc.invalidateQueries({ queryKey: ["group-balance"] });
