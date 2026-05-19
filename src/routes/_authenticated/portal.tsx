@@ -193,7 +193,7 @@ function PortalPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} />
+        <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} groupSavings={stats?.groupSavings ?? 0} />
         <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} />
       </div>
 
@@ -427,7 +427,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
   );
 }
 
-function ContributeCard({ memberId, groupId, mySavings }: { memberId: string; groupId: string; mySavings: number }) {
+function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { memberId: string; groupId: string; mySavings: number; groupSavings: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -464,6 +464,9 @@ function ContributeCard({ memberId, groupId, mySavings }: { memberId: string; gr
         </p>
         <p className="mt-2 text-sm">
           Total saved: <strong className="font-display tabular-nums text-foreground">{money(mySavings)}</strong>
+        </p>
+        <p className="text-sm">
+          Group total: <strong className="font-display tabular-nums text-foreground">{money(groupSavings)}</strong>
         </p>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
