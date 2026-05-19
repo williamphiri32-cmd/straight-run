@@ -352,6 +352,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
     setAmount("");
     setTerm("3");
     setPurpose("");
+    setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["portal"] });
     qc.invalidateQueries({ queryKey: ["applications"] });
   };
