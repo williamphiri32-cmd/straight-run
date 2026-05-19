@@ -17,6 +17,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { PaymentMethodSelect, type PaymentMethod } from "@/components/payment-method-select";
 import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
