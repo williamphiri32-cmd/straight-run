@@ -180,6 +180,43 @@ function LoansPage() {
         </Dialog>
       </header>
 
+      {applications && applications.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            Loan applications · {applications.length}
+          </h2>
+          <Card className="divide-y">
+            {applications.map((a: any) => (
+              <div
+                key={a.id}
+                className="flex flex-wrap items-center justify-between gap-3 p-4"
+              >
+                <div>
+                  <p className="font-medium">
+                    {a.member_name} · {money(a.amount)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {fmtDate(a.created_at)} · {a.term_months} mo
+                    {a.purpose ? ` · "${a.purpose}"` : ""}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                    a.status === "approved"
+                      ? "bg-primary/15 text-primary"
+                      : a.status === "rejected"
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-accent/30 text-accent-foreground"
+                  }`}
+                >
+                  {a.status}
+                </span>
+              </div>
+            ))}
+          </Card>
+        </section>
+      )}
+
       {!loans || loans.length === 0 ? (
         <Card className="p-12 text-center">
           <p className="text-sm text-muted-foreground">
