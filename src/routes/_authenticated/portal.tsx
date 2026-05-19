@@ -359,6 +359,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: str
               <div className="space-y-1.5">
                 <Label htmlFor="a">Amount</Label>
                 <Input id="a" type="number" min="1" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">Max available: {money(availableFunds)}</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="t">Term (months)</Label>
