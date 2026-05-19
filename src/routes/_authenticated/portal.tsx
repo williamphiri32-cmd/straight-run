@@ -427,7 +427,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
   );
 }
 
-function ContributeCard({ memberId, groupId }: { memberId: string; groupId: string }) {
+function ContributeCard({ memberId, groupId, mySavings }: { memberId: string; groupId: string; mySavings: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
