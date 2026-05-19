@@ -310,7 +310,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: string; groupId: string; availableFunds: number }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [insufficientOpen, setInsufficientOpen] = useState(false);
@@ -321,6 +321,11 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: str
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(amount);
+    const termNum = Number(term);
+    if (termNum > maxTenure) {
+      toast.error(`Max loan tenure for you is ${maxTenure} months`);
+      return;
+    }
     if (amt > availableFunds) {
       setOpen(false);
       setInsufficientOpen(true);
