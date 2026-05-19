@@ -444,6 +444,7 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -451,12 +452,14 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return toast.error("Enter a valid amount");
     if (amt > 10_000_000) return toast.error("Amount too large");
+    if (!paymentMethod) return toast.error("Select a payment method");
     setSubmitting(true);
     const { error } = await supabase.from("contributions").insert({
       user_id: groupId,
       member_id: memberId,
       amount: amt,
       note: note.trim() ? note.trim().slice(0, 500) : null,
+      payment_method: paymentMethod,
     });
     setSubmitting(false);
     if (error) return toast.error(error.message);
@@ -464,6 +467,7 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
     setOpen(false);
     setAmount("");
     setNote("");
+    setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["portal"] });
   };
 
