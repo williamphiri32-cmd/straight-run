@@ -56,6 +56,7 @@ export type Database = {
         Row: {
           created_at: string
           default_interest_rate: number
+          default_max_tenure_months: number
           default_penalty_rate: number
           id: string
           saving_duration_months: number
@@ -65,6 +66,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_interest_rate?: number
+          default_max_tenure_months?: number
           default_penalty_rate?: number
           id?: string
           saving_duration_months?: number
@@ -74,6 +76,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_interest_rate?: number
+          default_max_tenure_months?: number
           default_penalty_rate?: number
           id?: string
           saving_duration_months?: number
@@ -172,6 +175,41 @@ export type Database = {
             foreignKeyName: "loans_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_loan_limits: {
+        Row: {
+          created_at: string
+          id: string
+          max_tenure_months: number
+          member_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_tenure_months: number
+          member_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_tenure_months?: number
+          member_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_loan_limits_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
             referencedRelation: "members"
             referencedColumns: ["id"]
           },

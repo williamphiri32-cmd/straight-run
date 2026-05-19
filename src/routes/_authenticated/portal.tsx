@@ -37,7 +37,7 @@ function PortalPage() {
     queryKey: ["portal", user?.id, me?.id],
     enabled: !!me && !!groupId,
     queryFn: async () => {
-      const [contribsRes, loansRes, repaysRes, appsRes, allocRes, allMembersRes] =
+      const [contribsRes, loansRes, repaysRes, appsRes, allocRes, allMembersRes, settingsRes, limitRes] =
         await Promise.all([
           supabase.from("contributions").select("*").eq("user_id", groupId!),
           supabase.from("loans").select("*").eq("user_id", groupId!),
@@ -49,6 +49,8 @@ function PortalPage() {
             .order("created_at", { ascending: false }),
           supabase.from("share_out_allocations").select("*").eq("user_id", groupId!),
           supabase.from("members").select("id, name").eq("user_id", groupId!),
+          supabase.from("group_settings").select("default_max_tenure_months").eq("user_id", groupId!).maybeSingle(),
+          supabase.from("member_loan_limits").select("max_tenure_months").eq("user_id", groupId!).eq("member_id", me!.id).maybeSingle(),
         ]);
       return {
         contributions: contribsRes.data ?? [],
@@ -57,6 +59,10 @@ function PortalPage() {
         applications: appsRes.data ?? [],
         allocations: allocRes.data ?? [],
         allMembers: allMembersRes.data ?? [],
+        maxTenure:
+          limitRes.data?.max_tenure_months ??
+          settingsRes.data?.default_max_tenure_months ??
+          12,
       };
     },
   });
@@ -188,7 +194,7 @@ function PortalPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} />
-        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} />
+        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} />
       </div>
 
       <Card className="p-5">
@@ -304,7 +310,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: string; groupId: string; availableFunds: number }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [insufficientOpen, setInsufficientOpen] = useState(false);
@@ -315,6 +321,11 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: str
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(amount);
+    const termNum = Number(term);
+    if (termNum > maxTenure) {
+      toast.error(`Max loan tenure for you is ${maxTenure} months`);
+      return;
+    }
     if (amt > availableFunds) {
       setOpen(false);
       setInsufficientOpen(true);
@@ -366,7 +377,8 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: str
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="t">Term (months)</Label>
-                <Input id="t" type="number" min="1" max="60" required value={term} onChange={(e) => setTerm(e.target.value)} />
+                <Input id="t" type="number" min="1" max={maxTenure} required value={term} onChange={(e) => setTerm(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">Max tenure: {maxTenure} months</p>
               </div>
             </div>
             <div className="space-y-1.5">
