@@ -204,6 +204,10 @@ function LoansPage() {
                 <Label htmlFor="d">Due date (optional)</Label>
                 <Input id="d" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label>Payment method</Label>
+                <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
+              </div>
               <DialogFooter>
                 <Button type="submit">Issue loan</Button>
               </DialogFooter>
