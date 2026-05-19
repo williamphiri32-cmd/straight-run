@@ -318,11 +318,16 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("3");
   const [purpose, setPurpose] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(amount);
     const termNum = Number(term);
+    if (!paymentMethod) {
+      toast.error("Select a payment method");
+      return;
+    }
     if (termNum > maxTenure) {
       toast.error(`Max loan tenure for you is ${maxTenure} months`);
       return;
@@ -338,6 +343,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
       amount: amt,
       term_months: Number(term),
       purpose: purpose || null,
+      payment_method: paymentMethod,
       status: "pending",
     });
     if (error) return toast.error(error.message);
