@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -48,6 +48,19 @@ function LoansPage() {
     },
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ["group-settings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("group_settings")
+        .select("default_interest_rate, default_penalty_rate")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const { data: loans } = useQuery({
     queryKey: ["loans", user?.id],
     enabled: !!user,
@@ -61,11 +74,39 @@ function LoansPage() {
     },
   });
 
+  const { data: applications } = useQuery({
+    queryKey: ["loan-applications-on-loans", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [appsRes, membersRes] = await Promise.all([
+        supabase
+          .from("loan_applications")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase.from("members").select("id, name"),
+      ]);
+      const nameMap = new Map(
+        (membersRes.data ?? []).map((m: any) => [m.id, m.name]),
+      );
+      return (appsRes.data ?? []).map((a: any) => ({
+        ...a,
+        member_name: nameMap.get(a.member_id) ?? "—",
+      }));
+    },
+  });
+
   const [open, setOpen] = useState(false);
   const [memberId, setMemberId] = useState("");
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("0");
   const [dueDate, setDueDate] = useState("");
+
+  // Sync interest default from group settings
+  useEffect(() => {
+    if (settings?.default_interest_rate != null) {
+      setRate(String(settings.default_interest_rate));
+    }
+  }, [settings?.default_interest_rate]);
 
   const issue = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,12 +116,13 @@ function LoansPage() {
       member_id: memberId,
       principal: Number(principal),
       interest_rate: Number(rate),
+      penalty_rate: Number(settings?.default_penalty_rate ?? 5) / 100,
       due_date: dueDate || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Loan issued");
     setOpen(false);
-    setMemberId(""); setPrincipal(""); setRate("0"); setDueDate("");
+    setMemberId(""); setPrincipal(""); setDueDate("");
     qc.invalidateQueries({ queryKey: ["loans"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
@@ -137,6 +179,43 @@ function LoansPage() {
           </DialogContent>
         </Dialog>
       </header>
+
+      {applications && applications.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            Loan applications · {applications.length}
+          </h2>
+          <Card className="divide-y">
+            {applications.map((a: any) => (
+              <div
+                key={a.id}
+                className="flex flex-wrap items-center justify-between gap-3 p-4"
+              >
+                <div>
+                  <p className="font-medium">
+                    {a.member_name} · {money(a.amount)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {fmtDate(a.created_at)} · {a.term_months} mo
+                    {a.purpose ? ` · "${a.purpose}"` : ""}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                    a.status === "approved"
+                      ? "bg-primary/15 text-primary"
+                      : a.status === "rejected"
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-accent/30 text-accent-foreground"
+                  }`}
+                >
+                  {a.status}
+                </span>
+              </div>
+            ))}
+          </Card>
+        </section>
+      )}
 
       {!loans || loans.length === 0 ? (
         <Card className="p-12 text-center">

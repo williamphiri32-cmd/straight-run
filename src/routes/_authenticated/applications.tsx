@@ -50,14 +50,20 @@ function ApplicationsPage() {
     if (error) return toast.error(error.message);
 
     if (status === "approved") {
-      // Issue the actual loan
+      // Pull default interest & penalty from group settings
+      const { data: settings } = await supabase
+        .from("group_settings")
+        .select("default_interest_rate, default_penalty_rate")
+        .eq("user_id", user.id)
+        .maybeSingle();
       const due = new Date();
       due.setMonth(due.getMonth() + (app.term_months ?? 3));
       const { error: loanErr } = await supabase.from("loans").insert({
         user_id: user.id,
         member_id: app.member_id,
         principal: app.amount,
-        interest_rate: 0,
+        interest_rate: Number(settings?.default_interest_rate ?? 0),
+        penalty_rate: Number(settings?.default_penalty_rate ?? 5) / 100,
         due_date: due.toISOString().slice(0, 10),
         application_id: app.id,
         note: app.purpose,
