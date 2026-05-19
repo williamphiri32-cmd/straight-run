@@ -123,13 +123,22 @@ function LoansPage() {
     }
   }, [settings?.default_interest_rate]);
 
+  const available = balance ?? 0;
+
   const issue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !memberId) return;
+    const amt = Number(principal);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return toast.error("Enter a valid amount");
+    }
+    if (amt > available + 0.005) {
+      return toast.error(`Insufficient group balance. Available: ${money(available)}`);
+    }
     const { error } = await supabase.from("loans").insert({
       user_id: user.id,
       member_id: memberId,
-      principal: Number(principal),
+      principal: amt,
       interest_rate: Number(rate),
       penalty_rate: Number(settings?.default_penalty_rate ?? 5) / 100,
       due_date: dueDate || null,
@@ -139,6 +148,7 @@ function LoansPage() {
     setOpen(false);
     setMemberId(""); setPrincipal(""); setDueDate("");
     qc.invalidateQueries({ queryKey: ["loans"] });
+    qc.invalidateQueries({ queryKey: ["group-balance"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
