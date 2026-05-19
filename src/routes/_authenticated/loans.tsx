@@ -74,6 +74,21 @@ function LoansPage() {
     },
   });
 
+  const { data: balance } = useQuery({
+    queryKey: ["group-balance", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [c, l, r] = await Promise.all([
+        supabase.from("contributions").select("amount").eq("user_id", user!.id),
+        supabase.from("loans").select("principal").eq("user_id", user!.id),
+        supabase.from("repayments").select("amount").eq("user_id", user!.id),
+      ]);
+      const sum = (rows: any[] | null) =>
+        (rows ?? []).reduce((a, x) => a + Number(x.amount ?? x.principal ?? 0), 0);
+      return sum(c.data) + sum(r.data) - sum(l.data);
+    },
+  });
+
   const { data: applications } = useQuery({
     queryKey: ["loan-applications-on-loans", user?.id],
     enabled: !!user,
@@ -108,13 +123,22 @@ function LoansPage() {
     }
   }, [settings?.default_interest_rate]);
 
+  const available = balance ?? 0;
+
   const issue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !memberId) return;
+    const amt = Number(principal);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return toast.error("Enter a valid amount");
+    }
+    if (amt > available + 0.005) {
+      return toast.error(`Insufficient group balance. Available: ${money(available)}`);
+    }
     const { error } = await supabase.from("loans").insert({
       user_id: user.id,
       member_id: memberId,
-      principal: Number(principal),
+      principal: amt,
       interest_rate: Number(rate),
       penalty_rate: Number(settings?.default_penalty_rate ?? 5) / 100,
       due_date: dueDate || null,
@@ -124,6 +148,7 @@ function LoansPage() {
     setOpen(false);
     setMemberId(""); setPrincipal(""); setDueDate("");
     qc.invalidateQueries({ queryKey: ["loans"] });
+    qc.invalidateQueries({ queryKey: ["group-balance"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
@@ -161,7 +186,8 @@ function LoansPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="pr">Principal</Label>
-                  <Input id="pr" type="number" min="0" step="0.01" required value={principal} onChange={(e) => setPrincipal(e.target.value)} />
+                  <Input id="pr" type="number" min="0" max={available.toFixed(2)} step="0.01" required value={principal} onChange={(e) => setPrincipal(e.target.value)} />
+                  <p className="text-[11px] text-muted-foreground">Available in group: {money(available)}</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="r">Interest %</Label>
@@ -305,6 +331,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
     setAmount("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["loans"] });
+    qc.invalidateQueries({ queryKey: ["group-balance"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
