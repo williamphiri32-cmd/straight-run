@@ -28,9 +28,7 @@ function AuthLayout() {
   }
 
   const nav = [
-    ...(isMember
-      ? ([{ to: "/portal", label: "My Portal", icon: User }] as const)
-      : []),
+    { to: "/portal", label: "My Portal", icon: User },
     { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
     { to: "/members", label: "Members", icon: Users },
     { to: "/loans", label: "Loans", icon: Banknote },
