@@ -414,3 +414,84 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: str
     </Card>
   );
 }
+
+function ContributeCard({ memberId, groupId }: { memberId: string; groupId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) return toast.error("Enter a valid amount");
+    if (amt > 10_000_000) return toast.error("Amount too large");
+    setSubmitting(true);
+    const { error } = await supabase.from("contributions").insert({
+      user_id: groupId,
+      member_id: memberId,
+      amount: amt,
+      note: note.trim() ? note.trim().slice(0, 500) : null,
+    });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Contribution recorded");
+    setOpen(false);
+    setAmount("");
+    setNote("");
+    qc.invalidateQueries({ queryKey: ["portal"] });
+  };
+
+  return (
+    <Card className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-accent/15 to-primary/10 p-5">
+      <div>
+        <h2 className="font-display text-lg font-semibold">Contribute to savings</h2>
+        <p className="text-sm text-muted-foreground">
+          Add to your cumulative savings in the group.
+        </p>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="secondary" className="gap-2">
+            <PiggyBank className="h-4 w-4" /> Contribute
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New contribution</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={submit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="c-amount">Amount</Label>
+              <Input
+                id="c-amount"
+                type="number"
+                min="1"
+                step="0.01"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="c-note">Note (optional)</Label>
+              <Textarea
+                id="c-note"
+                maxLength={500}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="e.g. Monthly savings for May"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Saving…" : "Save contribution"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
