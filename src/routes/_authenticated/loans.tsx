@@ -285,6 +285,9 @@ function LoansPage() {
                       }`}>
                         {fullyPaid ? "paid" : l.status}
                       </span>
+                      {l.payment_method && (
+                        <PaymentMethodIcon method={l.payment_method} className="h-5 w-5" />
+                      )}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Issued {fmtDate(l.issued_date)} · {Number(l.interest_rate)}% interest ({money(interest)})
