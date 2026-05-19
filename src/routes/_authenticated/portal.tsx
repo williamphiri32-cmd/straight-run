@@ -115,6 +115,12 @@ function PortalPage() {
     const projectedPool = Math.max(0, groupSavings + groupOutstanding * 0); // pool = savings (loans count as receivable)
     const projectedShare = projectShareOut(mySavings, groupSavings, projectedPool);
 
+    // Available funds for new loans = group savings - outstanding owed - pending application amounts
+    const pendingApplied = portal.applications
+      .filter((a: any) => a.status === "pending")
+      .reduce((a, x: any) => a + Number(x.amount), 0);
+    const availableFunds = Math.max(0, groupSavings - groupOutstanding - pendingApplied);
+
     return {
       mySavings,
       groupSavings,
@@ -123,6 +129,7 @@ function PortalPage() {
       outstanding,
       totalPenalties,
       projectedShare,
+      availableFunds,
     };
   }, [portal, me]);
 
@@ -179,7 +186,7 @@ function PortalPage() {
         />
       </div>
 
-      <ApplyForLoanCard memberId={me.id} groupId={me.user_id} />
+      <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} />
 
       <Card className="p-5">
         <h2 className="font-display text-lg font-semibold">My loans</h2>
@@ -294,19 +301,26 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId }: { memberId: string; groupId: string }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: string; groupId: string; availableFunds: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [insufficientOpen, setInsufficientOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("3");
   const [purpose, setPurpose] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const amt = Number(amount);
+    if (amt > availableFunds) {
+      setOpen(false);
+      setInsufficientOpen(true);
+      return;
+    }
     const { error } = await supabase.from("loan_applications").insert({
       user_id: groupId,
       member_id: memberId,
-      amount: Number(amount),
+      amount: amt,
       term_months: Number(term),
       purpose: purpose || null,
       status: "pending",
@@ -326,7 +340,8 @@ function ApplyForLoanCard({ memberId, groupId }: { memberId: string; groupId: st
       <div>
         <h2 className="font-display text-lg font-semibold">Need a loan?</h2>
         <p className="text-sm text-muted-foreground">
-          Submit an application. Your treasurer will review and decide.
+          Submit an application. Available group funds:{" "}
+          <strong className="text-foreground">{money(availableFunds)}</strong>
         </p>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -344,6 +359,7 @@ function ApplyForLoanCard({ memberId, groupId }: { memberId: string; groupId: st
               <div className="space-y-1.5">
                 <Label htmlFor="a">Amount</Label>
                 <Input id="a" type="number" min="1" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">Max available: {money(availableFunds)}</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="t">Term (months)</Label>
@@ -358,6 +374,38 @@ function ApplyForLoanCard({ memberId, groupId }: { memberId: string; groupId: st
               <Button type="submit">Submit application</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={insufficientOpen} onOpenChange={setInsufficientOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> Not enough funds
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p>
+              Your group doesn't have enough available funds to cover this loan.
+            </p>
+            <div className="rounded-md bg-muted p-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Requested</span>
+                <span className="font-medium tabular-nums">{money(Number(amount) || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Available</span>
+                <span className="font-medium tabular-nums">{money(availableFunds)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Available funds = total contributions − outstanding loans − pending applications.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInsufficientOpen(false)}>Close</Button>
+            <Button onClick={() => { setInsufficientOpen(false); setOpen(true); }}>Adjust amount</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
