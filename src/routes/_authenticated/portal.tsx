@@ -509,6 +509,10 @@ function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { member
               />
             </div>
             <div className="space-y-1.5">
+              <Label>Payment method</Label>
+              <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="c-note">Note (optional)</Label>
               <Textarea
                 id="c-note"
