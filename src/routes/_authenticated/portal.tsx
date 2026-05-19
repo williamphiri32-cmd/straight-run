@@ -194,7 +194,7 @@ function PortalPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} />
-        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} />
+        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} />
       </div>
 
       <Card className="p-5">
