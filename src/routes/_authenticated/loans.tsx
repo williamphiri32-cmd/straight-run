@@ -74,6 +74,21 @@ function LoansPage() {
     },
   });
 
+  const { data: balance } = useQuery({
+    queryKey: ["group-balance", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [c, l, r] = await Promise.all([
+        supabase.from("contributions").select("amount").eq("user_id", user!.id),
+        supabase.from("loans").select("principal").eq("user_id", user!.id),
+        supabase.from("repayments").select("amount").eq("user_id", user!.id),
+      ]);
+      const sum = (rows: any[] | null) =>
+        (rows ?? []).reduce((a, x) => a + Number(x.amount ?? x.principal ?? 0), 0);
+      return sum(c.data) + sum(r.data) - sum(l.data);
+    },
+  });
+
   const { data: applications } = useQuery({
     queryKey: ["loan-applications-on-loans", user?.id],
     enabled: !!user,
