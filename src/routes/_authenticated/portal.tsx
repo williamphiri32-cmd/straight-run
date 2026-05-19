@@ -301,19 +301,26 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId }: { memberId: string; groupId: string }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds }: { memberId: string; groupId: string; availableFunds: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [insufficientOpen, setInsufficientOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("3");
   const [purpose, setPurpose] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const amt = Number(amount);
+    if (amt > availableFunds) {
+      setOpen(false);
+      setInsufficientOpen(true);
+      return;
+    }
     const { error } = await supabase.from("loan_applications").insert({
       user_id: groupId,
       member_id: memberId,
-      amount: Number(amount),
+      amount: amt,
       term_months: Number(term),
       purpose: purpose || null,
       status: "pending",
@@ -333,7 +340,8 @@ function ApplyForLoanCard({ memberId, groupId }: { memberId: string; groupId: st
       <div>
         <h2 className="font-display text-lg font-semibold">Need a loan?</h2>
         <p className="text-sm text-muted-foreground">
-          Submit an application. Your treasurer will review and decide.
+          Submit an application. Available group funds:{" "}
+          <strong className="text-foreground">{money(availableFunds)}</strong>
         </p>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
