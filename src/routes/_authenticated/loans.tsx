@@ -331,6 +331,7 @@ function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
     setAmount("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["loans"] });
+    qc.invalidateQueries({ queryKey: ["group-balance"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
