@@ -361,6 +361,48 @@ export type Database = {
           },
         ]
       }
+      savings_inactivity_rules: {
+        Row: {
+          action: string
+          created_at: string
+          expels_member: boolean
+          id: string
+          months_without_saving: number
+          outcome: string | null
+          penalty_amount: number
+          sort_order: number
+          suspends_borrowing: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          expels_member?: boolean
+          id?: string
+          months_without_saving: number
+          outcome?: string | null
+          penalty_amount?: number
+          sort_order?: number
+          suspends_borrowing?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          expels_member?: boolean
+          id?: string
+          months_without_saving?: number
+          outcome?: string | null
+          penalty_amount?: number
+          sort_order?: number
+          suspends_borrowing?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       share_out_allocations: {
         Row: {
           amount: number
