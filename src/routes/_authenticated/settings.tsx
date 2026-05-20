@@ -7,8 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings as SettingsIcon, Save, Trash2, Plus, Layers } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Settings as SettingsIcon, Save, Trash2 } from "lucide-react";
+import { LoanTiersCard } from "@/components/loan-tiers-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
