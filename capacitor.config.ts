@@ -33,6 +33,10 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
   },
+  ios: {
+    contentInset: "always",
+    limitsNavigationsToAppBoundDomains: false,
+  },
 };
 
 export default config;
