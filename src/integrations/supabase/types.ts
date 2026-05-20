@@ -130,6 +130,48 @@ export type Database = {
         }
         Relationships: []
       }
+      loan_tiers: {
+        Row: {
+          created_at: string
+          id: string
+          installments: number
+          interest_rate: number
+          max_amount: number | null
+          min_amount: number
+          repayment_months: number
+          requires_approval: boolean
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installments: number
+          interest_rate: number
+          max_amount?: number | null
+          min_amount: number
+          repayment_months: number
+          requires_approval?: boolean
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installments?: number
+          interest_rate?: number
+          max_amount?: number | null
+          min_amount?: number
+          repayment_months?: number
+          requires_approval?: boolean
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       loans: {
         Row: {
           application_id: string | null
