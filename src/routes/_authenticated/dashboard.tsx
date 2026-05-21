@@ -93,6 +93,7 @@ function Dashboard() {
         .sort((a, b) => (a.date < b.date ? 1 : -1))
         .slice(0, 6);
       return {
+        totalPenalties,
         memberCount: totalMembers,
         totalSavings,
         outstanding,
