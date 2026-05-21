@@ -5,7 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Gavel, Save, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Gavel, Save, Trash2, ArrowUp, ArrowDown, MinusCircle } from "lucide-react";
 import { toast } from "sonner";
 
 type Offence = {
@@ -29,6 +36,22 @@ const DEFAULTS: Omit<Offence, "id">[] = [
 
 export function OffencesCard({ userId }: { userId?: string }) {
   const qc = useQueryClient();
+  const [memberId, setMemberId] = useState<string>("");
+
+  const { data: members } = useQuery({
+    queryKey: ["members", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("members")
+        .select("id, name")
+        .eq("user_id", userId!)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: rows, isLoading } = useQuery({
     queryKey: ["offence-rules", userId],
     enabled: !!userId,
@@ -42,6 +65,32 @@ export function OffencesCard({ userId }: { userId?: string }) {
       return (data ?? []) as Offence[];
     },
   });
+
+  const applyPenalty = async (row: Offence) => {
+    if (!userId) return;
+    if (!memberId) return toast.error("Choose a member first");
+    let amount = row.penalty_amount;
+    if (row.penalty_is_percent) {
+      const baseStr = window.prompt(
+        `"${row.offence}" is ${row.penalty_amount}% ${row.penalty_note ?? ""}.\nEnter the base amount (ZMW) to charge against:`,
+      );
+      const base = Number(baseStr);
+      if (!base || base <= 0) return;
+      amount = +(base * (row.penalty_amount / 100)).toFixed(2);
+    }
+    if (!(amount > 0)) return toast.error("Penalty amount must be greater than 0");
+    const member = members?.find((m) => m.id === memberId);
+    const { error } = await supabase.from("contributions").insert({
+      user_id: userId,
+      member_id: memberId,
+      amount: -Math.abs(amount),
+      contribution_date: new Date().toISOString().slice(0, 10),
+      note: `Offence penalty: ${row.offence}`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(`Deducted ZMW ${amount} from ${member?.name ?? "member"}`);
+    qc.invalidateQueries({ queryKey: ["contributions"] });
+  };
 
   const seed = async () => {
     if (!userId) return;
@@ -99,6 +148,23 @@ export function OffencesCard({ userId }: { userId?: string }) {
         </div>
       </header>
 
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2.5">
+        <span className="text-xs font-medium text-muted-foreground">Apply to member:</span>
+        <Select value={memberId} onValueChange={setMemberId}>
+          <SelectTrigger className="h-8 w-56 text-sm">
+            <SelectValue placeholder="Choose member…" />
+          </SelectTrigger>
+          <SelectContent>
+            {(members ?? []).map((m) => (
+              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">
+          Then click <span className="font-medium">Apply</span> on an offence to deduct the fine from their savings.
+        </span>
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : !rows || rows.length === 0 ? (
@@ -114,7 +180,7 @@ export function OffencesCard({ userId }: { userId?: string }) {
                 <th className="pb-2 pr-2 whitespace-nowrap">Amount</th>
                 <th className="pb-2 pr-2 whitespace-nowrap">%</th>
                 <th className="pb-2 pr-2 whitespace-nowrap">Note</th>
-                <th className="pb-2 whitespace-nowrap w-16"></th>
+                <th className="pb-2 whitespace-nowrap w-28"></th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -126,6 +192,8 @@ export function OffencesCard({ userId }: { userId?: string }) {
                   canDown={i < rows.length - 1}
                   onUp={() => move(r.id, "up")}
                   onDown={() => move(r.id, "down")}
+                  onApply={() => applyPenalty(r)}
+                  canApply={!!memberId && r.penalty_amount > 0}
                 />
               ))}
             </tbody>
@@ -137,13 +205,15 @@ export function OffencesCard({ userId }: { userId?: string }) {
 }
 
 function Row({
-  row, canUp, canDown, onUp, onDown,
+  row, canUp, canDown, onUp, onDown, onApply, canApply,
 }: {
   row: Offence;
   canUp: boolean;
   canDown: boolean;
   onUp: () => void;
   onDown: () => void;
+  onApply: () => void;
+  canApply: boolean;
 }) {
   const qc = useQueryClient();
   const [offence, setOffence] = useState(row.offence);
@@ -188,16 +258,28 @@ function Row({
         <td className="py-2 pr-2 whitespace-nowrap">{row.penalty_is_percent ? "Yes" : "—"}</td>
         <td className="py-2 pr-2 text-muted-foreground">{row.penalty_note || "—"}</td>
         <td className="py-2 whitespace-nowrap">
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canUp} onClick={(e) => { e.stopPropagation(); onUp(); }}>
-              <ArrowUp className="h-3 w-3" />
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs"
+              disabled={!canApply}
+              onClick={(e) => { e.stopPropagation(); onApply(); }}
+              title={canApply ? "Deduct fine from selected member" : "Pick a member and set an amount > 0"}
+            >
+              <MinusCircle className="h-3 w-3" /> Apply
             </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canDown} onClick={(e) => { e.stopPropagation(); onDown(); }}>
-              <ArrowDown className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); remove(); }}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canUp} onClick={(e) => { e.stopPropagation(); onUp(); }}>
+                <ArrowUp className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canDown} onClick={(e) => { e.stopPropagation(); onDown(); }}>
+                <ArrowDown className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); remove(); }}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
         </td>
       </tr>
