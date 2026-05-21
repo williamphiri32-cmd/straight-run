@@ -69,6 +69,7 @@ function SettingsPage() {
   const [interest, setInterest] = useState("0");
   const [penalty, setPenalty] = useState("5");
   const [maxTenure, setMaxTenure] = useState("12");
+  const [loanLimitMult, setLoanLimitMult] = useState("3");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
