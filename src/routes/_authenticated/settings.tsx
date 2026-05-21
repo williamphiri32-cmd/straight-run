@@ -194,6 +194,8 @@ function SettingsPage() {
         overrides={overrides ?? []}
         defaultTenure={Number(maxTenure) || 12}
       />
+
+      <ClearDataCard userId={user?.id} />
     </div>
   );
 }
