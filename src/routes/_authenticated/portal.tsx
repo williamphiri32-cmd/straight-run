@@ -423,15 +423,20 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="a">Amount</Label>
-                <Input id="a" type="number" min="1" max={availableFunds} step="0.01" required value={amount} onChange={(e) => {
+                <Input id="a" type="number" min="1" max={effectiveMax} step="0.01" required value={amount} onChange={(e) => {
                   const v = Number(e.target.value);
-                  if (Number.isFinite(v) && v > availableFunds) {
-                    setAmount(String(availableFunds));
+                  if (Number.isFinite(v) && v > effectiveMax) {
+                    setAmount(String(effectiveMax));
                   } else {
                     setAmount(e.target.value);
                   }
                 }} />
-                <p className="text-[11px] text-muted-foreground">Max available: {money(availableFunds)}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Max you can apply for: {money(effectiveMax)}
+                  {loanLimitMultiplier > 0 && (
+                    <> · limit {loanLimitMultiplier}× savings ({money(personalLimit)})</>
+                  )}
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="t">Term (months)</Label>
