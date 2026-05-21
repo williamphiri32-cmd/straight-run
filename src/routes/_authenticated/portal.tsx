@@ -431,12 +431,13 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
                     setAmount(e.target.value);
                   }
                 }} />
-                <p className="text-[11px] text-muted-foreground">
-                  Max you can apply for: {money(effectiveMax)}
+                <div className="space-y-0.5 text-[11px] text-muted-foreground">
+                  <p>You can borrow up to <strong className="text-foreground">{money(effectiveMax)}</strong>.</p>
                   {loanLimitMultiplier > 0 && (
-                    <> · limit {loanLimitMultiplier}× savings ({money(personalLimit)})</>
+                    <p>Your personal limit is {loanLimitMultiplier}× your savings = {money(personalLimit)}.</p>
                   )}
-                </p>
+                  <p>Group balance available: {money(availableFunds)}.</p>
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="t">Term (months)</Label>
