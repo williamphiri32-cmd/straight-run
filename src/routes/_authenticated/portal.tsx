@@ -71,16 +71,13 @@ function PortalPage() {
 
   const stats = useMemo(() => {
     if (!portal || !me) return null;
-    const mySavings = portal.contributions
-      .filter((c: any) => c.member_id === me.id)
-      .reduce((a, c: any) => a + Number(c.amount), 0);
+    const myContributions = portal.contributions.filter((c: any) => c.member_id === me.id);
+    const mySavings = myContributions.reduce((a, c: any) => a + Number(c.amount), 0);
     const groupSavings = portal.contributions.reduce(
       (a, c: any) => a + Number(c.amount),
       0,
     );
-    const firstContrib = portal.contributions
-      .filter((c: any) => c.member_id === me.id)
-      .reduce<string | null>((min, c: any) => {
+    const firstContrib = myContributions.reduce<string | null>((min, c: any) => {
         if (!min || c.contribution_date < min) return c.contribution_date;
         return min;
       }, null);
@@ -110,10 +107,19 @@ function PortalPage() {
       (a, x) => a + x.stats.totalOwed,
       0,
     );
-    const totalPenalties = loansWithStats.reduce(
+    const loanPenalties = loansWithStats.reduce(
       (a, x) => a + x.stats.penalty,
       0,
     );
+    const appliedPenalties = myContributions.reduce((total, c: any) => {
+      const note = String(c.note ?? "").toLowerCase();
+      const amount = Number(c.amount);
+      if (amount < 0 && (note.startsWith("offence penalty") || note.startsWith("inactivity penalty"))) {
+        return total + Math.abs(amount);
+      }
+      return total;
+    }, 0);
+    const totalPenalties = loanPenalties + appliedPenalties;
 
     // Penalties accrued across the group so far
     const groupPenalties = portal.loans.reduce((a, l: any) => {
