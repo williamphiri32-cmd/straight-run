@@ -68,6 +68,20 @@ function LoansPage() {
     },
   });
 
+  const { data: tiers } = useQuery({
+    queryKey: ["loan-tiers", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loan_tiers")
+        .select("min_amount, max_amount, interest_rate")
+        .eq("user_id", user!.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: loans } = useQuery({
     queryKey: ["loans", user?.id],
     enabled: !!user,
@@ -124,12 +138,27 @@ function LoansPage() {
   const [dueDate, setDueDate] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
-  // Sync interest default from group settings
+  // Match principal to a loan tier and derive its interest rate
+  const matchedTier = (() => {
+    const amt = Number(principal);
+    if (!Number.isFinite(amt) || amt <= 0 || !tiers?.length) return null;
+    return (
+      tiers.find((t: any) => {
+        const min = Number(t.min_amount ?? 0);
+        const max = t.max_amount == null ? Infinity : Number(t.max_amount);
+        return amt >= min && amt <= max;
+      }) ?? null
+    );
+  })();
+
   useEffect(() => {
-    if (settings?.default_interest_rate != null) {
+    if (matchedTier) {
+      setRate(String(matchedTier.interest_rate));
+    } else if (settings?.default_interest_rate != null) {
       setRate(String(settings.default_interest_rate));
     }
-  }, [settings?.default_interest_rate]);
+  }, [matchedTier?.interest_rate, settings?.default_interest_rate]);
+
 
   const available = balance ?? 0;
 
@@ -212,7 +241,7 @@ function LoansPage() {
                 <Label htmlFor="pr">Principal</Label>
                 <Input id="pr" type="number" min="0" max={available.toFixed(2)} step="0.01" required value={principal} onChange={(e) => setPrincipal(e.target.value)} />
                 <p className="text-[11px] text-muted-foreground">
-                  Available in group: {money(available)} · Interest {rate}% (from Settings)
+                  Available in group: {money(available)} · Interest {rate}% {matchedTier ? "(from matching loan tier)" : "(default from Settings)"}
                 </p>
               </div>
               <div className="space-y-1.5">
