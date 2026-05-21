@@ -186,10 +186,15 @@ function ShareOutPage() {
     if (totalSaved <= 0) return toast.error("No savings to distribute");
     if (totalToDistribute <= 0)
       return toast.error(
-        mode === "cycle"
-          ? "Nothing to pay out yet"
-          : "Enter a pool amount",
+        mode === "manual" ? "Enter a pool amount" : "Nothing to pay out yet",
       );
+
+    const autoNote =
+      mode === "projected"
+        ? "Projected share-out (group balance distributed by savings ratio)"
+        : mode === "actual"
+          ? "Actual projected share-out (outstanding loans + group balance + penalties)"
+          : null;
 
     const { data: so, error } = await supabase
       .from("share_outs")
@@ -197,11 +202,7 @@ function ShareOutPage() {
         user_id: user.id,
         share_out_date: date,
         total_amount: Number(totalToDistribute.toFixed(2)),
-        note:
-          note ||
-          (mode === "cycle"
-            ? "End-of-cycle payout (contributions + monthly profit shares)"
-            : null),
+        note: note || autoNote,
       })
       .select()
       .single();
