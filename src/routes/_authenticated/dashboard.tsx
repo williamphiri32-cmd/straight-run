@@ -87,6 +87,12 @@ function Dashboard() {
         recent,
         contributedCount,
         notContributedCount: totalMembers - contributedCount,
+        contributedMembers: members.data
+          ?.filter((m: any) => memberIdsWithContribThisMonth.has(m.id))
+          .map((m: any) => m.name as string) ?? [],
+        notContributedMembers: members.data
+          ?.filter((m: any) => !memberIdsWithContribThisMonth.has(m.id))
+          .map((m: any) => m.name as string) ?? [],
       };
     },
   });
