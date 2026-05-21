@@ -258,16 +258,28 @@ function RuleRow({
         <td className="py-2 pr-2 whitespace-nowrap">{rule.suspends_borrowing ? "Yes" : "—"}</td>
         <td className="py-2 pr-2 whitespace-nowrap">{rule.expels_member ? "Yes" : "—"}</td>
         <td className="py-2 whitespace-nowrap">
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canUp} onClick={(e) => { e.stopPropagation(); onUp(); }}>
-              <ArrowUp className="h-3 w-3" />
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs"
+              disabled={!canApply}
+              onClick={(e) => { e.stopPropagation(); onApply(); }}
+              title={canApply ? "Deduct penalty from selected member" : "Pick a member and set a penalty > 0"}
+            >
+              <MinusCircle className="h-3 w-3" /> Apply
             </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canDown} onClick={(e) => { e.stopPropagation(); onDown(); }}>
-              <ArrowDown className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); remove(); }}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canUp} onClick={(e) => { e.stopPropagation(); onUp(); }}>
+                <ArrowUp className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canDown} onClick={(e) => { e.stopPropagation(); onDown(); }}>
+                <ArrowDown className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); remove(); }}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
         </td>
       </tr>
