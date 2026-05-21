@@ -53,13 +53,24 @@ function Dashboard() {
         const id = r.loan_id as string;
         repaidByLoan.set(id, (repaidByLoan.get(id) ?? 0) + Number(r.amount));
       }
-      let totalPenalties = 0;
+      let loanPenalties = 0;
       for (const loan of loans.data ?? []) {
         if (loan.status === "paid") continue;
         const repaid = repaidByLoan.get(loan.id) ?? 0;
         const stats = computeLoanStats(loan, repaid);
-        totalPenalties += stats.penalty;
+        loanPenalties += stats.penalty;
       }
+
+      const offencePenalties = (contribs.data ?? []).reduce((acc, c: any) => {
+        const amt = Number(c.amount ?? 0);
+        const note = String(c.note ?? "");
+        if (amt < 0 && note.toLowerCase().startsWith("offence penalty")) {
+          return acc + Math.abs(amt);
+        }
+        return acc;
+      }, 0);
+
+      const totalPenalties = loanPenalties + offencePenalties;
 
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -124,7 +135,7 @@ function Dashboard() {
           : undefined,
     },
     { label: "Outstanding loans", value: money(data?.outstanding), icon: Banknote },
-    { label: "Penalties", value: money(data?.totalPenalties), icon: AlertTriangle },
+    { label: "Penalties", value: money(data?.totalPenalties), icon: AlertTriangle, danger: true },
     { label: "Members", value: String(data?.memberCount ?? 0), icon: Users },
   ];
 
@@ -140,7 +151,7 @@ function Dashboard() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
-        {stats.map(({ label, value, icon: Icon, hl, sub }) => (
+        {stats.map(({ label, value, icon: Icon, hl, sub, danger }) => (
           <Card
             key={label}
             className={`p-5 ${hl ? "bg-primary text-primary-foreground" : ""}`}
@@ -149,9 +160,9 @@ function Dashboard() {
               <span className={`text-xs uppercase tracking-wider ${hl ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                 {label}
               </span>
-              <Icon className={`h-4 w-4 ${hl ? "text-accent" : "text-muted-foreground"}`} />
+              <Icon className={`h-4 w-4 ${hl ? "text-accent" : danger ? "text-destructive" : "text-muted-foreground"}`} />
             </div>
-            <p className={`font-display text-xl font-semibold tabular-nums break-all sm:text-2xl ${sub ? "mt-2" : "mt-3"}`}>
+            <p className={`font-display text-xl font-semibold tabular-nums break-all sm:text-2xl ${sub ? "mt-2" : "mt-3"} ${danger ? "text-destructive" : ""}`}>
               {value}
             </p>
             {sub && (
