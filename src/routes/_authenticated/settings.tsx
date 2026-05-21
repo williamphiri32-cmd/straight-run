@@ -182,6 +182,8 @@ function SettingsPage() {
 
       <SavingsInactivityCard userId={user?.id} />
 
+      <OffencesCard userId={user?.id} />
+
       <MemberTenureOverrides
         userId={user?.id}
         members={members ?? []}
