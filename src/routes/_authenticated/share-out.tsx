@@ -19,7 +19,7 @@ import {
 import { Gift, Sparkles, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
-import { computeCyclePayouts } from "@/lib/payout";
+
 
 export const Route = createFileRoute("/_authenticated/share-out")({
   head: () => ({ meta: [{ title: "Share-out — Kijiji" }] }),
@@ -99,29 +99,29 @@ function ShareOutPage() {
 
   const poolNum = Number(pool) || 0;
 
-  const cyclePayouts = useMemo(() => {
-    if (!cycleData || !memberSavings.length) return null;
-    return computeCyclePayouts(
-      memberSavings.map((m) => ({ id: m.id })),
-      cycleData.contributions as any,
-      cycleData.repayments as any,
-      cycleData.loans as any,
-    );
-  }, [cycleData, memberSavings]);
+  const totalLent = (cycleData?.loans ?? []).reduce(
+    (a: number, l: any) => a + Number(l.principal ?? 0),
+    0,
+  );
+  const totalRepaid = (cycleData?.repayments ?? []).reduce(
+    (a: number, r: any) => a + Number(r.amount ?? 0),
+    0,
+  );
+  const outstanding = Math.max(0, totalLent - totalRepaid);
+  const groupBalance = Math.max(0, totalSaved - outstanding);
 
   const cycleRows = useMemo(() => {
-    if (!cyclePayouts) return [];
     return memberSavings.map((m) => {
-      const p = cyclePayouts.perMember.find((x) => x.member_id === m.id);
+      const ratio = totalSaved > 0 ? m.saved / totalSaved : 0;
       return {
         id: m.id,
         name: m.name,
-        contributions: p?.contributions ?? 0,
-        profit: p?.profit ?? 0,
-        share: p?.total ?? 0,
+        contributions: m.saved,
+        profit: 0,
+        share: ratio * groupBalance,
       };
     });
-  }, [cyclePayouts, memberSavings]);
+  }, [memberSavings, totalSaved, groupBalance]);
 
   const manualRows = memberSavings.map((m) => ({
     ...m,
@@ -238,10 +238,9 @@ function ShareOutPage() {
 
               {mode === "cycle" ? (
                 <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-                  Each member receives their total contributions plus their
-                  monthly profit share. Profit per month = loan interest +
-                  penalties collected, distributed by each member's
-                  contribution ratio for that month.
+                  The current group balance ({money(groupBalance)} = savings −
+                  outstanding loans) is shared out to members in proportion to
+                  what each has saved.
                 </div>
               ) : null}
 
@@ -340,10 +339,13 @@ function ShareOutPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Total member savings
+            Group balance
           </p>
           <p className="mt-2 font-display text-2xl font-semibold tabular-nums">
-            {money(totalSaved)}
+            {money(groupBalance)}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Savings {money(totalSaved)} − outstanding loans {money(outstanding)}
           </p>
         </Card>
         <Card className="p-5">
