@@ -241,7 +241,7 @@ function LoansPage() {
                 <Label htmlFor="pr">Principal</Label>
                 <Input id="pr" type="number" min="0" max={available.toFixed(2)} step="0.01" required value={principal} onChange={(e) => setPrincipal(e.target.value)} />
                 <p className="text-[11px] text-muted-foreground">
-                  Available in group: {money(available)} · Interest {rate}% (from Settings)
+                  Available in group: {money(available)} · Interest {rate}% {matchedTier ? "(from matching loan tier)" : "(default from Settings)"}
                 </p>
               </div>
               <div className="space-y-1.5">
