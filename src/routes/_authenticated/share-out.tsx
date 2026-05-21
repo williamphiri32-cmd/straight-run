@@ -238,10 +238,9 @@ function ShareOutPage() {
 
               {mode === "cycle" ? (
                 <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-                  Each member receives their total contributions plus their
-                  monthly profit share. Profit per month = loan interest +
-                  penalties collected, distributed by each member's
-                  contribution ratio for that month.
+                  The current group balance ({money(groupBalance)} = savings −
+                  outstanding loans) is shared out to members in proportion to
+                  what each has saved.
                 </div>
               ) : null}
 
