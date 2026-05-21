@@ -37,15 +37,21 @@ function LoansPage() {
   const qc = useQueryClient();
 
   const { data: members } = useQuery({
-    queryKey: ["members-min", user?.id],
+    queryKey: ["members-with-contribs", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, name")
-        .order("name");
-      if (error) throw error;
-      return data;
+      const [mRes, cRes] = await Promise.all([
+        supabase.from("members").select("id, name").order("name"),
+        supabase.from("contributions").select("member_id, amount"),
+      ]);
+      if (mRes.error) throw mRes.error;
+      const totals = new Map<string, number>();
+      for (const c of cRes.data ?? []) {
+        totals.set(c.member_id, (totals.get(c.member_id) ?? 0) + Number(c.amount));
+      }
+      return (mRes.data ?? [])
+        .map((m: any) => ({ ...m, contributed: totals.get(m.id) ?? 0 }))
+        .filter((m) => m.contributed > 0);
     },
   });
 
