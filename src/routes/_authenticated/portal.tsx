@@ -311,7 +311,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds, groupSavings, maxTenure }: { memberId: string; groupId: string; availableFunds: number; groupSavings: number; maxTenure: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [insufficientOpen, setInsufficientOpen] = useState(false);
