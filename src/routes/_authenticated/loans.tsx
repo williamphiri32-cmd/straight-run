@@ -138,12 +138,27 @@ function LoansPage() {
   const [dueDate, setDueDate] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
-  // Sync interest default from group settings
+  // Match principal to a loan tier and derive its interest rate
+  const matchedTier = (() => {
+    const amt = Number(principal);
+    if (!Number.isFinite(amt) || amt <= 0 || !tiers?.length) return null;
+    return (
+      tiers.find((t: any) => {
+        const min = Number(t.min_amount ?? 0);
+        const max = t.max_amount == null ? Infinity : Number(t.max_amount);
+        return amt >= min && amt <= max;
+      }) ?? null
+    );
+  })();
+
   useEffect(() => {
-    if (settings?.default_interest_rate != null) {
+    if (matchedTier) {
+      setRate(String(matchedTier.interest_rate));
+    } else if (settings?.default_interest_rate != null) {
       setRate(String(settings.default_interest_rate));
     }
-  }, [settings?.default_interest_rate]);
+  }, [matchedTier?.interest_rate, settings?.default_interest_rate]);
+
 
   const available = balance ?? 0;
 
