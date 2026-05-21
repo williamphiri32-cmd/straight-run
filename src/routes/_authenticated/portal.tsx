@@ -195,7 +195,7 @@ function PortalPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} groupSavings={stats?.groupSavings ?? 0} />
-        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} />
+        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} groupSavings={stats?.groupSavings ?? 0} maxTenure={portal?.maxTenure ?? 12} />
       </div>
 
       <Card className="p-5">
@@ -311,7 +311,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds, groupSavings, maxTenure }: { memberId: string; groupId: string; availableFunds: number; groupSavings: number; maxTenure: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [insufficientOpen, setInsufficientOpen] = useState(false);
@@ -362,8 +362,8 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
       <div>
         <h2 className="font-display text-lg font-semibold">Need a loan?</h2>
         <p className="text-sm text-muted-foreground">
-          Submit an application. Available group funds:{" "}
-          <strong className="text-foreground">{money(availableFunds)}</strong>
+          Submit an application. Group balance: <strong className="text-foreground">{money(groupSavings)}</strong>
+          <span className="ml-2 text-muted-foreground">(Available: {money(availableFunds)})</span>
         </p>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
