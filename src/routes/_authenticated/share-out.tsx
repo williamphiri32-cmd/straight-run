@@ -254,36 +254,36 @@ function ShareOutPage() {
               <DialogTitle>New share-out</DialogTitle>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-4">
-              <div className="flex gap-2 rounded-md border border-border bg-muted/30 p-1">
-                <button
-                  type="button"
-                  onClick={() => setMode("cycle")}
-                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
-                    mode === "cycle"
-                      ? "bg-background shadow-sm"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  End-of-cycle (auto)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("manual")}
-                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
-                    mode === "manual"
-                      ? "bg-background shadow-sm"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  Manual pool
-                </button>
+              <div className="flex gap-1 rounded-md border border-border bg-muted/30 p-1">
+                {(["projected", "actual", "manual"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode(m)}
+                    className={`flex-1 rounded px-2 py-1.5 text-xs font-medium capitalize transition ${
+                      mode === m ? "bg-background shadow-sm" : "text-muted-foreground"
+                    }`}
+                  >
+                    {m === "projected"
+                      ? "Projected"
+                      : m === "actual"
+                        ? "Actual projected"
+                        : "Manual"}
+                  </button>
+                ))}
               </div>
 
-              {mode === "cycle" ? (
+              {mode === "projected" ? (
                 <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-                  The current group balance ({money(groupBalance)} = savings −
-                  outstanding loans) is shared out to members in proportion to
-                  what each has saved.
+                  Group balance ({money(projectedPool)} = savings −
+                  outstanding loan principal) split by each member's savings
+                  ratio.
+                </div>
+              ) : mode === "actual" ? (
+                <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  Actual pool ({money(actualPool)} = outstanding loans owed +
+                  group balance + penalties) split by each member's savings
+                  ratio.
                 </div>
               ) : null}
 
