@@ -99,29 +99,29 @@ function ShareOutPage() {
 
   const poolNum = Number(pool) || 0;
 
-  const cyclePayouts = useMemo(() => {
-    if (!cycleData || !memberSavings.length) return null;
-    return computeCyclePayouts(
-      memberSavings.map((m) => ({ id: m.id })),
-      cycleData.contributions as any,
-      cycleData.repayments as any,
-      cycleData.loans as any,
-    );
-  }, [cycleData, memberSavings]);
+  const totalLent = (cycleData?.loans ?? []).reduce(
+    (a: number, l: any) => a + Number(l.principal ?? 0),
+    0,
+  );
+  const totalRepaid = (cycleData?.repayments ?? []).reduce(
+    (a: number, r: any) => a + Number(r.amount ?? 0),
+    0,
+  );
+  const outstanding = Math.max(0, totalLent - totalRepaid);
+  const groupBalance = Math.max(0, totalSaved - outstanding);
 
   const cycleRows = useMemo(() => {
-    if (!cyclePayouts) return [];
     return memberSavings.map((m) => {
-      const p = cyclePayouts.perMember.find((x) => x.member_id === m.id);
+      const ratio = totalSaved > 0 ? m.saved / totalSaved : 0;
       return {
         id: m.id,
         name: m.name,
-        contributions: p?.contributions ?? 0,
-        profit: p?.profit ?? 0,
-        share: p?.total ?? 0,
+        contributions: m.saved,
+        profit: 0,
+        share: ratio * groupBalance,
       };
     });
-  }, [cyclePayouts, memberSavings]);
+  }, [memberSavings, totalSaved, groupBalance]);
 
   const manualRows = memberSavings.map((m) => ({
     ...m,
