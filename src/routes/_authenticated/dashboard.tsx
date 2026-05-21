@@ -85,7 +85,15 @@ function Dashboard() {
 
   const stats = [
     { label: "Group balance", value: money(data?.balance), icon: Wallet, hl: true },
-    { label: "Total savings", value: money(data?.totalSavings), icon: PiggyBank },
+    {
+      label: "Total savings",
+      value: money(data?.totalSavings),
+      icon: PiggyBank,
+      sub:
+        data != null
+          ? `${data.contributedCount} contributed · ${data.notContributedCount} not contributed`
+          : undefined,
+    },
     { label: "Outstanding loans", value: money(data?.outstanding), icon: Banknote },
     { label: "Members", value: String(data?.memberCount ?? 0), icon: Users },
   ];
@@ -100,7 +108,7 @@ function Dashboard() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon, hl }) => (
+        {stats.map(({ label, value, icon: Icon, hl, sub }) => (
           <Card
             key={label}
             className={`p-5 ${hl ? "bg-primary text-primary-foreground" : ""}`}
@@ -111,9 +119,14 @@ function Dashboard() {
               </span>
               <Icon className={`h-4 w-4 ${hl ? "text-accent" : "text-muted-foreground"}`} />
             </div>
-            <p className="mt-3 font-display text-xl font-semibold tabular-nums break-all sm:text-2xl">
+            <p className={`font-display text-xl font-semibold tabular-nums break-all sm:text-2xl ${sub ? "mt-2" : "mt-3"}`}>
               {value}
             </p>
+            {sub && (
+              <p className={`mt-1 text-xs ${hl ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                {sub}
+              </p>
+            )}
           </Card>
         ))}
       </div>
