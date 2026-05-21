@@ -92,29 +92,74 @@ function ShareOutPage() {
   const totalSaved = memberSavings.reduce((a, m) => a + m.saved, 0);
 
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"cycle" | "manual">("cycle");
   const [pool, setPool] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
 
   const poolNum = Number(pool) || 0;
-  const preview = memberSavings.map((m) => ({
+
+  const cyclePayouts = useMemo(() => {
+    if (!cycleData || !memberSavings.length) return null;
+    return computeCyclePayouts(
+      memberSavings.map((m) => ({ id: m.id })),
+      cycleData.contributions as any,
+      cycleData.repayments as any,
+      cycleData.loans as any,
+    );
+  }, [cycleData, memberSavings]);
+
+  const cycleRows = useMemo(() => {
+    if (!cyclePayouts) return [];
+    return memberSavings.map((m) => {
+      const p = cyclePayouts.perMember.find((x) => x.member_id === m.id);
+      return {
+        id: m.id,
+        name: m.name,
+        contributions: p?.contributions ?? 0,
+        profit: p?.profit ?? 0,
+        share: p?.total ?? 0,
+      };
+    });
+  }, [cyclePayouts, memberSavings]);
+
+  const manualRows = memberSavings.map((m) => ({
     ...m,
     share: totalSaved > 0 ? (m.saved / totalSaved) * poolNum : 0,
   }));
+
+  const preview =
+    mode === "cycle"
+      ? cycleRows.map((r) => ({ id: r.id, name: r.name, share: r.share }))
+      : manualRows;
+
+  const totalToDistribute =
+    mode === "cycle"
+      ? cycleRows.reduce((a, r) => a + r.share, 0)
+      : poolNum;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (totalSaved <= 0) return toast.error("No savings to distribute");
-    if (poolNum <= 0) return toast.error("Enter a pool amount");
+    if (totalToDistribute <= 0)
+      return toast.error(
+        mode === "cycle"
+          ? "Nothing to pay out yet"
+          : "Enter a pool amount",
+      );
 
     const { data: so, error } = await supabase
       .from("share_outs")
       .insert({
         user_id: user.id,
         share_out_date: date,
-        total_amount: poolNum,
-        note: note || null,
+        total_amount: Number(totalToDistribute.toFixed(2)),
+        note:
+          note ||
+          (mode === "cycle"
+            ? "End-of-cycle payout (contributions + monthly profit shares)"
+            : null),
       })
       .select()
       .single();
