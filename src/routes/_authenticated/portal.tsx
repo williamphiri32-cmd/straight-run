@@ -380,7 +380,14 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="a">Amount</Label>
-                <Input id="a" type="number" min="1" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <Input id="a" type="number" min="1" max={availableFunds} step="0.01" required value={amount} onChange={(e) => {
+                  const v = Number(e.target.value);
+                  if (Number.isFinite(v) && v > availableFunds) {
+                    setAmount(String(availableFunds));
+                  } else {
+                    setAmount(e.target.value);
+                  }
+                }} />
                 <p className="text-[11px] text-muted-foreground">Max available: {money(availableFunds)}</p>
               </div>
               <div className="space-y-1.5">
