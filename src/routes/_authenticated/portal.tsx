@@ -51,7 +51,7 @@ function PortalPage() {
             .order("created_at", { ascending: false }),
           supabase.from("share_out_allocations").select("*").eq("user_id", groupId!),
           supabase.from("members").select("id, name").eq("user_id", groupId!),
-          supabase.from("group_settings").select("default_max_tenure_months").eq("user_id", groupId!).maybeSingle(),
+          supabase.from("group_settings").select("default_max_tenure_months, loan_limit_multiplier").eq("user_id", groupId!).maybeSingle(),
           supabase.from("member_loan_limits").select("max_tenure_months").eq("user_id", groupId!).eq("member_id", me!.id).maybeSingle(),
         ]);
       return {
