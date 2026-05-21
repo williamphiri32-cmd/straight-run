@@ -214,6 +214,19 @@ function PortalPage() {
               ? `Savings + ${money(stats!.projectedProfit)} profit & penalties`
               : "Savings + share of interest & penalties"
           }
+          extra={
+            <div className="mt-2 border-t pt-2">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Actual projected share-out
+              </p>
+              <p className="font-display text-base tabular-nums sm:text-lg">
+                {money(stats?.actualProjectedShare ?? 0)}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Your share of pool {money(stats?.actualPool ?? 0)} (outstanding loans + group balance + penalties)
+              </p>
+            </div>
+          }
         />
       </div>
 
