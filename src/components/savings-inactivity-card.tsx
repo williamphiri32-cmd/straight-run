@@ -140,6 +140,23 @@ export function SavingsInactivityCard({ userId }: { userId?: string }) {
         </div>
       </header>
 
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2.5">
+        <span className="text-xs font-medium text-muted-foreground">Apply to member:</span>
+        <Select value={memberId} onValueChange={setMemberId}>
+          <SelectTrigger className="h-8 w-56 text-sm">
+            <SelectValue placeholder="Choose member…" />
+          </SelectTrigger>
+          <SelectContent>
+            {(members ?? []).map((m) => (
+              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">
+          Then click <span className="font-medium">Apply</span> on a rule to deduct it from their savings.
+        </span>
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : !rules || rules.length === 0 ? (
@@ -157,7 +174,7 @@ export function SavingsInactivityCard({ userId }: { userId?: string }) {
                 <th className="pb-2 pr-2 whitespace-nowrap">Penalty (ZMW)</th>
                 <th className="pb-2 pr-2 whitespace-nowrap">Suspend</th>
                 <th className="pb-2 pr-2 whitespace-nowrap">Expel</th>
-                <th className="pb-2 whitespace-nowrap w-16"></th>
+                <th className="pb-2 whitespace-nowrap w-28"></th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -169,6 +186,8 @@ export function SavingsInactivityCard({ userId }: { userId?: string }) {
                   canDown={i < rules.length - 1}
                   onUp={() => move(r.id, "up")}
                   onDown={() => move(r.id, "down")}
+                  onApply={() => applyPenalty(r)}
+                  canApply={!!memberId && r.penalty_amount > 0}
                 />
               ))}
             </tbody>
