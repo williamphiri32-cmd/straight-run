@@ -200,7 +200,11 @@ function PortalPage() {
           icon={<Gift className="h-4 w-4" />}
           label="Projected share-out"
           value={money(stats?.projectedShare ?? 0)}
-          hint="If pool = group savings"
+          hint={
+            (stats?.projectedProfit ?? 0) > 0
+              ? `Savings + ${money(stats!.projectedProfit)} profit`
+              : "Contributions + monthly profit share"
+          }
         />
       </div>
 
