@@ -140,6 +140,10 @@ function LoansPage() {
     if (!Number.isFinite(amt) || amt <= 0) {
       return toast.error("Enter a valid amount");
     }
+    const eligible = (members ?? []).find((m: any) => m.id === memberId);
+    if (!eligible) {
+      return toast.error("Member must contribute savings before borrowing");
+    }
     if (!paymentMethod) {
       return toast.error("Select a payment method");
     }
