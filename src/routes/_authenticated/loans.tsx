@@ -68,6 +68,20 @@ function LoansPage() {
     },
   });
 
+  const { data: tiers } = useQuery({
+    queryKey: ["loan-tiers", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loan_tiers")
+        .select("min_amount, max_amount, interest_rate")
+        .eq("user_id", user!.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: loans } = useQuery({
     queryKey: ["loans", user?.id],
     enabled: !!user,
