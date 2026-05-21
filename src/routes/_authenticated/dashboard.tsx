@@ -11,8 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Users, Banknote, PiggyBank, Wallet } from "lucide-react";
+import { Users, Banknote, PiggyBank, Wallet, AlertTriangle } from "lucide-react";
 import { money, fmtDate } from "@/lib/format";
+import { computeLoanStats } from "@/lib/penalty";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Overview — Kijiji" }] }),
