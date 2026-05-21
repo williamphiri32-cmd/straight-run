@@ -81,6 +81,9 @@ export function SavingsInactivityCard({ userId }: { userId?: string }) {
     if (error) return toast.error(error.message);
     toast.success(`Deducted ZMW ${rule.penalty_amount} from ${member?.name ?? "member"}`);
     qc.invalidateQueries({ queryKey: ["contributions"] });
+    qc.invalidateQueries({ queryKey: ["members"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    qc.invalidateQueries({ queryKey: ["portal"] });
   };
   const seed = async () => {
     if (!userId) return;
