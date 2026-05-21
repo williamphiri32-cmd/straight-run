@@ -155,6 +155,8 @@ function PortalPage() {
       projectedShare,
       projectedProfit,
       availableFunds,
+      actualProjectedShare,
+      actualPool,
     };
   }, [portal, me]);
 
