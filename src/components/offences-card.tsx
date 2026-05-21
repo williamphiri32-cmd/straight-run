@@ -36,6 +36,22 @@ const DEFAULTS: Omit<Offence, "id">[] = [
 
 export function OffencesCard({ userId }: { userId?: string }) {
   const qc = useQueryClient();
+  const [memberId, setMemberId] = useState<string>("");
+
+  const { data: members } = useQuery({
+    queryKey: ["members", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("members")
+        .select("id, name")
+        .eq("user_id", userId!)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: rows, isLoading } = useQuery({
     queryKey: ["offence-rules", userId],
     enabled: !!userId,
@@ -49,6 +65,32 @@ export function OffencesCard({ userId }: { userId?: string }) {
       return (data ?? []) as Offence[];
     },
   });
+
+  const applyPenalty = async (row: Offence) => {
+    if (!userId) return;
+    if (!memberId) return toast.error("Choose a member first");
+    let amount = row.penalty_amount;
+    if (row.penalty_is_percent) {
+      const baseStr = window.prompt(
+        `"${row.offence}" is ${row.penalty_amount}% ${row.penalty_note ?? ""}.\nEnter the base amount (ZMW) to charge against:`,
+      );
+      const base = Number(baseStr);
+      if (!base || base <= 0) return;
+      amount = +(base * (row.penalty_amount / 100)).toFixed(2);
+    }
+    if (!(amount > 0)) return toast.error("Penalty amount must be greater than 0");
+    const member = members?.find((m) => m.id === memberId);
+    const { error } = await supabase.from("contributions").insert({
+      user_id: userId,
+      member_id: memberId,
+      amount: -Math.abs(amount),
+      contribution_date: new Date().toISOString().slice(0, 10),
+      note: `Offence penalty: ${row.offence}`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(`Deducted ZMW ${amount} from ${member?.name ?? "member"}`);
+    qc.invalidateQueries({ queryKey: ["contributions"] });
+  };
 
   const seed = async () => {
     if (!userId) return;
