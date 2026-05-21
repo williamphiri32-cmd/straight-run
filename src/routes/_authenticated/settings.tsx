@@ -11,6 +11,7 @@ import { Settings as SettingsIcon, Save, Trash2 } from "lucide-react";
 import { LoanTiersCard } from "@/components/loan-tiers-card";
 import { SavingsInactivityCard } from "@/components/savings-inactivity-card";
 import { OffencesCard } from "@/components/offences-card";
+import { PayoutRulesCard } from "@/components/payout-rules-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -177,6 +178,8 @@ function SettingsPage() {
           </form>
         )}
       </Card>
+
+      <PayoutRulesCard />
 
       <LoanTiersCard userId={user?.id} />
 
