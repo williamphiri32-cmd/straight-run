@@ -201,8 +201,8 @@ function PortalPage() {
           value={money(stats?.projectedShare ?? 0)}
           hint={
             (stats?.projectedProfit ?? 0) > 0
-              ? `Savings + ${money(stats!.projectedProfit)} profit`
-              : "Contributions + monthly profit share"
+              ? `Savings + ${money(stats!.projectedProfit)} profit & penalties`
+              : "Savings + share of interest & penalties"
           }
         />
       </div>
