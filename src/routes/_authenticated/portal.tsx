@@ -362,8 +362,8 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, groupSavings, max
       <div>
         <h2 className="font-display text-lg font-semibold">Need a loan?</h2>
         <p className="text-sm text-muted-foreground">
-          Submit an application. Available group funds:{" "}
-          <strong className="text-foreground">{money(availableFunds)}</strong>
+          Submit an application. Group balance: <strong className="text-foreground">{money(groupSavings)}</strong>
+          <span className="ml-2 text-muted-foreground">(Available: {money(availableFunds)})</span>
         </p>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
