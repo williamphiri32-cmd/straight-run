@@ -340,10 +340,13 @@ function ShareOutPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Total member savings
+            Group balance
           </p>
           <p className="mt-2 font-display text-2xl font-semibold tabular-nums">
-            {money(totalSaved)}
+            {money(groupBalance)}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Savings {money(totalSaved)} − outstanding loans {money(outstanding)}
           </p>
         </Card>
         <Card className="p-5">
