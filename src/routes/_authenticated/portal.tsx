@@ -135,7 +135,15 @@ function PortalPage() {
     const totalRepaid = portal.repayments.reduce((a, r: any) => a + Number(r.amount), 0);
     const availableFunds = Math.max(0, groupSavings - (totalLent - totalRepaid));
 
-
+    // Actual projected share-out = member's ratio of (outstanding loans + group balance + penalties)
+    const groupOutstanding = loansWithStats.length
+      ? portal.loans.reduce((a, l: any) => {
+          const repaid = repaysByLoan.get(l.id) ?? 0;
+          return a + computeLoanStats(l, repaid).totalOwed;
+        }, 0)
+      : 0;
+    const actualPool = groupOutstanding + availableFunds + groupPenalties;
+    const actualProjectedShare = actualPool * myRatio;
 
     return {
       mySavings,
