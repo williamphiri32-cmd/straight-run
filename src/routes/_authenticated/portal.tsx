@@ -115,33 +115,27 @@ function PortalPage() {
       0,
     );
 
-    // Live projected payout = my savings + my share of group profit pool.
-    // Profit pool = interest on all loans (full cycle) + penalties accrued so far.
-    const groupInterest = portal.loans.reduce(
-      (a, l: any) => a + Number(l.principal) * (Number(l.interest_rate) || 0) / 100,
-      0,
-    );
+    // Penalties accrued across the group so far
     const groupPenalties = portal.loans.reduce((a, l: any) => {
       const repaid = repaysByLoan.get(l.id) ?? 0;
       return a + computeLoanStats(l, repaid).penalty;
     }, 0);
-    const profitPool = groupInterest + groupPenalties;
     const myRatio = groupSavings > 0 ? mySavings / groupSavings : 0;
-    const projectedProfit = profitPool * myRatio;
-    const projectedShare = mySavings + projectedProfit;
 
-    // Available funds = group cash balance, matches dashboard (savings − principal owed)
+    // Available funds = group cash balance (savings − principal still out)
     const totalLent = portal.loans.reduce((a, l: any) => a + Number(l.principal), 0);
     const totalRepaid = portal.repayments.reduce((a, r: any) => a + Number(r.amount), 0);
     const availableFunds = Math.max(0, groupSavings - (totalLent - totalRepaid));
 
+    // Projected share-out = member's ratio of the group balance only
+    const projectedShare = availableFunds * myRatio;
+    const projectedProfit = Math.max(0, projectedShare - mySavings);
+
     // Actual projected share-out = member's ratio of (outstanding loans + group balance + penalties)
-    const groupOutstanding = loansWithStats.length
-      ? portal.loans.reduce((a, l: any) => {
-          const repaid = repaysByLoan.get(l.id) ?? 0;
-          return a + computeLoanStats(l, repaid).totalOwed;
-        }, 0)
-      : 0;
+    const groupOutstanding = portal.loans.reduce((a, l: any) => {
+      const repaid = repaysByLoan.get(l.id) ?? 0;
+      return a + computeLoanStats(l, repaid).totalOwed;
+    }, 0);
     const actualPool = groupOutstanding + availableFunds + groupPenalties;
     const actualProjectedShare = actualPool * myRatio;
 
