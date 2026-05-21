@@ -37,15 +37,21 @@ function LoansPage() {
   const qc = useQueryClient();
 
   const { data: members } = useQuery({
-    queryKey: ["members-min", user?.id],
+    queryKey: ["members-with-contribs", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, name")
-        .order("name");
-      if (error) throw error;
-      return data;
+      const [mRes, cRes] = await Promise.all([
+        supabase.from("members").select("id, name").order("name"),
+        supabase.from("contributions").select("member_id, amount"),
+      ]);
+      if (mRes.error) throw mRes.error;
+      const totals = new Map<string, number>();
+      for (const c of cRes.data ?? []) {
+        totals.set(c.member_id, (totals.get(c.member_id) ?? 0) + Number(c.amount));
+      }
+      return (mRes.data ?? [])
+        .map((m: any) => ({ ...m, contributed: totals.get(m.id) ?? 0 }))
+        .filter((m) => m.contributed > 0);
     },
   });
 
@@ -133,6 +139,10 @@ function LoansPage() {
     const amt = Number(principal);
     if (!Number.isFinite(amt) || amt <= 0) {
       return toast.error("Enter a valid amount");
+    }
+    const eligible = (members ?? []).find((m: any) => m.id === memberId);
+    if (!eligible) {
+      return toast.error("Member must contribute savings before borrowing");
     }
     if (!paymentMethod) {
       return toast.error("Select a payment method");
@@ -257,7 +267,7 @@ function LoansPage() {
         <Card className="p-12 text-center">
           <p className="text-sm text-muted-foreground">
             {members && members.length === 0
-              ? "Add a member first, then you can issue a loan."
+              ? "No eligible borrowers yet. Members must record a contribution before they can take a loan."
               : "No loans yet."}
           </p>
         </Card>
