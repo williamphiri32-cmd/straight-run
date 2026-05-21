@@ -122,11 +122,9 @@ function PortalPage() {
     const projectedPool = Math.max(0, groupSavings + groupOutstanding * 0); // pool = savings (loans count as receivable)
     const projectedShare = projectShareOut(mySavings, groupSavings, projectedPool);
 
-    // Available funds for new loans = group savings - outstanding owed - pending application amounts
-    const pendingApplied = portal.applications
-      .filter((a: any) => a.status === "pending")
-      .reduce((a, x: any) => a + Number(x.amount), 0);
-    const availableFunds = Math.max(0, groupSavings - groupOutstanding - pendingApplied);
+    // Available funds for new loans = group cash balance (savings - outstanding owed)
+    const availableFunds = Math.max(0, groupSavings - groupOutstanding);
+
 
     return {
       mySavings,
