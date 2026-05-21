@@ -299,6 +299,42 @@ export type Database = {
         }
         Relationships: []
       }
+      offence_rules: {
+        Row: {
+          created_at: string
+          id: string
+          offence: string
+          penalty_amount: number
+          penalty_is_percent: boolean
+          penalty_note: string | null
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offence: string
+          penalty_amount?: number
+          penalty_is_percent?: boolean
+          penalty_note?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offence?: string
+          penalty_amount?: number
+          penalty_is_percent?: boolean
+          penalty_note?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
