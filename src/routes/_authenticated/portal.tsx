@@ -431,8 +431,9 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Available funds = total contributions − outstanding loans − pending applications.
+              Available funds = group balance (total contributions − outstanding loans).
             </p>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInsufficientOpen(false)}>Close</Button>
