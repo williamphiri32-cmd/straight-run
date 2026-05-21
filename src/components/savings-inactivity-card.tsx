@@ -199,13 +199,15 @@ export function SavingsInactivityCard({ userId }: { userId?: string }) {
 }
 
 function RuleRow({
-  rule, canUp, canDown, onUp, onDown,
+  rule, canUp, canDown, onUp, onDown, onApply, canApply,
 }: {
   rule: Rule;
   canUp: boolean;
   canDown: boolean;
   onUp: () => void;
   onDown: () => void;
+  onApply: () => void;
+  canApply: boolean;
 }) {
   const qc = useQueryClient();
   const [months, setMonths] = useState(String(rule.months_without_saving));
