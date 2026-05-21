@@ -12,6 +12,7 @@ import { LoanTiersCard } from "@/components/loan-tiers-card";
 import { SavingsInactivityCard } from "@/components/savings-inactivity-card";
 import { OffencesCard } from "@/components/offences-card";
 import { PayoutRulesCard } from "@/components/payout-rules-card";
+import { ClearDataCard } from "@/components/clear-data-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
