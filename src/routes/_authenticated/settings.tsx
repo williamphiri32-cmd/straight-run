@@ -92,6 +92,7 @@ function SettingsPage() {
       default_interest_rate: Math.max(0, Number(interest) || 0),
       default_penalty_rate: Math.max(0, Number(penalty) || 0),
       default_max_tenure_months: Math.max(1, Number(maxTenure) || 1),
+      loan_limit_multiplier: Math.max(0, Number(loanLimitMult) || 0),
     };
     const { error } = await supabase
       .from("group_settings")
