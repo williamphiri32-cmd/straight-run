@@ -90,6 +90,8 @@ export function OffencesCard({ userId }: { userId?: string }) {
     if (error) return toast.error(error.message);
     toast.success(`Deducted ZMW ${amount} from ${member?.name ?? "member"}`);
     qc.invalidateQueries({ queryKey: ["contributions"] });
+    qc.invalidateQueries({ queryKey: ["members"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
   const seed = async () => {
