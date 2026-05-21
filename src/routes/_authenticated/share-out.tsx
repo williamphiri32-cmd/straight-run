@@ -16,9 +16,10 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Gift, Sparkles } from "lucide-react";
+import { Gift, Sparkles, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
+import { computeCyclePayouts } from "@/lib/payout";
 
 export const Route = createFileRoute("/_authenticated/share-out")({
   head: () => ({ meta: [{ title: "Share-out — Kijiji" }] }),
@@ -61,6 +62,25 @@ function ShareOutPage() {
     },
   });
 
+  // Raw contributions, loans and repayments for end-of-cycle profit calc.
+  const { data: cycleData } = useQuery({
+    queryKey: ["cycle-data", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [c, l, r] = await Promise.all([
+        supabase
+          .from("contributions")
+          .select("member_id, amount, contribution_date"),
+        supabase.from("loans").select("id, principal, interest_rate, penalty_rate"),
+        supabase.from("repayments").select("loan_id, amount, paid_date"),
+      ]);
+      if (c.error) throw c.error;
+      if (l.error) throw l.error;
+      if (r.error) throw r.error;
+      return { contributions: c.data ?? [], loans: l.data ?? [], repayments: r.data ?? [] };
+    },
+  });
+
   const memberSavings = useMemo(() => {
     return (members ?? []).map((m) => ({
       id: m.id,
@@ -72,29 +92,74 @@ function ShareOutPage() {
   const totalSaved = memberSavings.reduce((a, m) => a + m.saved, 0);
 
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"cycle" | "manual">("cycle");
   const [pool, setPool] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
 
   const poolNum = Number(pool) || 0;
-  const preview = memberSavings.map((m) => ({
+
+  const cyclePayouts = useMemo(() => {
+    if (!cycleData || !memberSavings.length) return null;
+    return computeCyclePayouts(
+      memberSavings.map((m) => ({ id: m.id })),
+      cycleData.contributions as any,
+      cycleData.repayments as any,
+      cycleData.loans as any,
+    );
+  }, [cycleData, memberSavings]);
+
+  const cycleRows = useMemo(() => {
+    if (!cyclePayouts) return [];
+    return memberSavings.map((m) => {
+      const p = cyclePayouts.perMember.find((x) => x.member_id === m.id);
+      return {
+        id: m.id,
+        name: m.name,
+        contributions: p?.contributions ?? 0,
+        profit: p?.profit ?? 0,
+        share: p?.total ?? 0,
+      };
+    });
+  }, [cyclePayouts, memberSavings]);
+
+  const manualRows = memberSavings.map((m) => ({
     ...m,
     share: totalSaved > 0 ? (m.saved / totalSaved) * poolNum : 0,
   }));
+
+  const preview =
+    mode === "cycle"
+      ? cycleRows.map((r) => ({ id: r.id, name: r.name, share: r.share }))
+      : manualRows;
+
+  const totalToDistribute =
+    mode === "cycle"
+      ? cycleRows.reduce((a, r) => a + r.share, 0)
+      : poolNum;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (totalSaved <= 0) return toast.error("No savings to distribute");
-    if (poolNum <= 0) return toast.error("Enter a pool amount");
+    if (totalToDistribute <= 0)
+      return toast.error(
+        mode === "cycle"
+          ? "Nothing to pay out yet"
+          : "Enter a pool amount",
+      );
 
     const { data: so, error } = await supabase
       .from("share_outs")
       .insert({
         user_id: user.id,
         share_out_date: date,
-        total_amount: poolNum,
-        note: note || null,
+        total_amount: Number(totalToDistribute.toFixed(2)),
+        note:
+          note ||
+          (mode === "cycle"
+            ? "End-of-cycle payout (contributions + monthly profit shares)"
+            : null),
       })
       .select()
       .single();
@@ -146,19 +211,62 @@ function ShareOutPage() {
               <DialogTitle>New share-out</DialogTitle>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="pool">Pool to distribute</Label>
-                  <Input
-                    id="pool"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={pool}
-                    onChange={(e) => setPool(e.target.value)}
-                  />
+              <div className="flex gap-2 rounded-md border border-border bg-muted/30 p-1">
+                <button
+                  type="button"
+                  onClick={() => setMode("cycle")}
+                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
+                    mode === "cycle"
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  End-of-cycle (auto)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("manual")}
+                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
+                    mode === "manual"
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  Manual pool
+                </button>
+              </div>
+
+              {mode === "cycle" ? (
+                <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  Each member receives their total contributions plus their
+                  monthly profit share. Profit per month = loan interest +
+                  penalties collected, distributed by each member's
+                  contribution ratio for that month.
                 </div>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-3">
+                {mode === "manual" ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="pool">Pool to distribute</Label>
+                    <Input
+                      id="pool"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required={mode === "manual"}
+                      value={pool}
+                      onChange={(e) => setPool(e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label>Total payout</Label>
+                    <div className="flex h-10 items-center rounded-md border border-input bg-muted/30 px-3 font-display tabular-nums text-primary">
+                      {money(totalToDistribute)}
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label htmlFor="dt">Date</Label>
                   <Input
@@ -181,18 +289,42 @@ function ShareOutPage() {
 
               <div className="rounded-md border border-border bg-muted/30 p-3">
                 <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-                  <Sparkles className="h-3.5 w-3.5" /> Preview
+                  {mode === "cycle" ? (
+                    <Calculator className="h-3.5 w-3.5" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  Preview
                 </div>
-                <ul className="max-h-56 space-y-1.5 overflow-auto text-sm">
-                  {preview.map((p) => (
-                    <li key={p.id} className="flex justify-between">
-                      <span>{p.name}</span>
-                      <span className="font-display tabular-nums text-primary">
-                        {money(p.share)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                {mode === "cycle" ? (
+                  <ul className="max-h-56 space-y-1.5 overflow-auto text-sm">
+                    {cycleRows.map((p) => (
+                      <li key={p.id} className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {money(p.contributions)} saved
+                            {p.profit > 0 ? ` + ${money(p.profit)} profit` : ""}
+                          </p>
+                        </div>
+                        <span className="font-display tabular-nums text-primary">
+                          {money(p.share)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="max-h-56 space-y-1.5 overflow-auto text-sm">
+                    {manualRows.map((p) => (
+                      <li key={p.id} className="flex justify-between">
+                        <span>{p.name}</span>
+                        <span className="font-display tabular-nums text-primary">
+                          {money(p.share)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <DialogFooter>
