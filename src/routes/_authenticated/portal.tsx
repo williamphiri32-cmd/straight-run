@@ -65,6 +65,7 @@ function PortalPage() {
           limitRes.data?.max_tenure_months ??
           settingsRes.data?.default_max_tenure_months ??
           12,
+        loanLimitMultiplier: Number((settingsRes.data as any)?.loan_limit_multiplier ?? 3),
       };
     },
   });
