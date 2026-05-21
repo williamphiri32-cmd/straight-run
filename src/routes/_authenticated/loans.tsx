@@ -208,16 +208,12 @@ function LoansPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="pr">Principal</Label>
-                  <Input id="pr" type="number" min="0" max={available.toFixed(2)} step="0.01" required value={principal} onChange={(e) => setPrincipal(e.target.value)} />
-                  <p className="text-[11px] text-muted-foreground">Available in group: {money(available)}</p>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="r">Interest %</Label>
-                  <Input id="r" type="number" min="0" step="0.1" value={rate} onChange={(e) => setRate(e.target.value)} />
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="pr">Principal</Label>
+                <Input id="pr" type="number" min="0" max={available.toFixed(2)} step="0.01" required value={principal} onChange={(e) => setPrincipal(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">
+                  Available in group: {money(available)} · Interest {rate}% (from Settings)
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="d">Due date (optional)</Label>
