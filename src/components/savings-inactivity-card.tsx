@@ -36,6 +36,22 @@ const DEFAULTS: Omit<Rule, "id">[] = [
 
 export function SavingsInactivityCard({ userId }: { userId?: string }) {
   const qc = useQueryClient();
+  const [memberId, setMemberId] = useState<string>("");
+
+  const { data: members } = useQuery({
+    queryKey: ["members", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("members")
+        .select("id, name")
+        .eq("user_id", userId!)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: rules, isLoading } = useQuery({
     queryKey: ["savings-inactivity", userId],
     enabled: !!userId,
@@ -50,7 +66,23 @@ export function SavingsInactivityCard({ userId }: { userId?: string }) {
     },
   });
 
-  const seed = async () => {
+  const applyPenalty = async (rule: Rule) => {
+    if (!userId) return;
+    if (!memberId) return toast.error("Choose a member first");
+    if (!(rule.penalty_amount > 0)) return toast.error("This rule has no penalty amount");
+    const member = members?.find((m) => m.id === memberId);
+    const { error } = await supabase.from("contributions").insert({
+      user_id: userId,
+      member_id: memberId,
+      amount: -Math.abs(rule.penalty_amount),
+      contribution_date: new Date().toISOString().slice(0, 10),
+      note: `Inactivity penalty: ${rule.action} (${rule.months_without_saving}m)`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(`Deducted ZMW ${rule.penalty_amount} from ${member?.name ?? "member"}`);
+    qc.invalidateQueries({ queryKey: ["contributions"] });
+  };
+
     if (!userId) return;
     const rows = DEFAULTS.map((r) => ({ ...r, user_id: userId }));
     const { error } = await supabase.from("savings_inactivity_rules").insert(rows);
