@@ -211,19 +211,62 @@ function ShareOutPage() {
               <DialogTitle>New share-out</DialogTitle>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="pool">Pool to distribute</Label>
-                  <Input
-                    id="pool"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={pool}
-                    onChange={(e) => setPool(e.target.value)}
-                  />
+              <div className="flex gap-2 rounded-md border border-border bg-muted/30 p-1">
+                <button
+                  type="button"
+                  onClick={() => setMode("cycle")}
+                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
+                    mode === "cycle"
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  End-of-cycle (auto)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("manual")}
+                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
+                    mode === "manual"
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  Manual pool
+                </button>
+              </div>
+
+              {mode === "cycle" ? (
+                <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  Each member receives their total contributions plus their
+                  monthly profit share. Profit per month = loan interest +
+                  penalties collected, distributed by each member's
+                  contribution ratio for that month.
                 </div>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-3">
+                {mode === "manual" ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="pool">Pool to distribute</Label>
+                    <Input
+                      id="pool"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required={mode === "manual"}
+                      value={pool}
+                      onChange={(e) => setPool(e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label>Total payout</Label>
+                    <div className="flex h-10 items-center rounded-md border border-input bg-muted/30 px-3 font-display tabular-nums text-primary">
+                      {money(totalToDistribute)}
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label htmlFor="dt">Date</Label>
                   <Input
@@ -246,18 +289,42 @@ function ShareOutPage() {
 
               <div className="rounded-md border border-border bg-muted/30 p-3">
                 <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-                  <Sparkles className="h-3.5 w-3.5" /> Preview
+                  {mode === "cycle" ? (
+                    <Calculator className="h-3.5 w-3.5" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  Preview
                 </div>
-                <ul className="max-h-56 space-y-1.5 overflow-auto text-sm">
-                  {preview.map((p) => (
-                    <li key={p.id} className="flex justify-between">
-                      <span>{p.name}</span>
-                      <span className="font-display tabular-nums text-primary">
-                        {money(p.share)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                {mode === "cycle" ? (
+                  <ul className="max-h-56 space-y-1.5 overflow-auto text-sm">
+                    {cycleRows.map((p) => (
+                      <li key={p.id} className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {money(p.contributions)} saved
+                            {p.profit > 0 ? ` + ${money(p.profit)} profit` : ""}
+                          </p>
+                        </div>
+                        <span className="font-display tabular-nums text-primary">
+                          {money(p.share)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="max-h-56 space-y-1.5 overflow-auto text-sm">
+                    {manualRows.map((p) => (
+                      <li key={p.id} className="flex justify-between">
+                        <span>{p.name}</span>
+                        <span className="font-display tabular-nums text-primary">
+                          {money(p.share)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <DialogFooter>
