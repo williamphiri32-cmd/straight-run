@@ -306,12 +306,14 @@ function StatCard({
   value,
   hint,
   tone = "default",
+  extra,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   hint?: string;
   tone?: "default" | "warn";
+  extra?: React.ReactNode;
 }) {
   return (
     <Card className="p-5">
