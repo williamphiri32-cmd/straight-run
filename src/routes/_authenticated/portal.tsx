@@ -329,6 +329,7 @@ function StatCard({
         {value}
       </p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {extra}
     </Card>
   );
 }
