@@ -151,7 +151,7 @@ function Dashboard() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
-        {stats.map(({ label, value, icon: Icon, hl, sub }) => (
+        {stats.map(({ label, value, icon: Icon, hl, sub, danger }) => (
           <Card
             key={label}
             className={`p-5 ${hl ? "bg-primary text-primary-foreground" : ""}`}
@@ -160,9 +160,9 @@ function Dashboard() {
               <span className={`text-xs uppercase tracking-wider ${hl ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                 {label}
               </span>
-              <Icon className={`h-4 w-4 ${hl ? "text-accent" : "text-muted-foreground"}`} />
+              <Icon className={`h-4 w-4 ${hl ? "text-accent" : danger ? "text-destructive" : "text-muted-foreground"}`} />
             </div>
-            <p className={`font-display text-xl font-semibold tabular-nums break-all sm:text-2xl ${sub ? "mt-2" : "mt-3"}`}>
+            <p className={`font-display text-xl font-semibold tabular-nums break-all sm:text-2xl ${sub ? "mt-2" : "mt-3"} ${danger ? "text-destructive" : ""}`}>
               {value}
             </p>
             {sub && (
