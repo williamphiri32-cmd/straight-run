@@ -62,6 +62,7 @@ export type Database = {
           default_max_tenure_months: number
           default_penalty_rate: number
           id: string
+          loan_limit_multiplier: number
           saving_duration_months: number
           updated_at: string
           user_id: string
@@ -72,6 +73,7 @@ export type Database = {
           default_max_tenure_months?: number
           default_penalty_rate?: number
           id?: string
+          loan_limit_multiplier?: number
           saving_duration_months?: number
           updated_at?: string
           user_id: string
@@ -82,6 +84,7 @@ export type Database = {
           default_max_tenure_months?: number
           default_penalty_rate?: number
           id?: string
+          loan_limit_multiplier?: number
           saving_duration_months?: number
           updated_at?: string
           user_id?: string

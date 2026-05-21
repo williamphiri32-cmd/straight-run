@@ -69,6 +69,7 @@ function SettingsPage() {
   const [interest, setInterest] = useState("0");
   const [penalty, setPenalty] = useState("5");
   const [maxTenure, setMaxTenure] = useState("12");
+  const [loanLimitMult, setLoanLimitMult] = useState("3");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -77,6 +78,7 @@ function SettingsPage() {
       setInterest(String(settings.default_interest_rate));
       setPenalty(String(settings.default_penalty_rate));
       setMaxTenure(String(settings.default_max_tenure_months ?? 12));
+      setLoanLimitMult(String((settings as any).loan_limit_multiplier ?? 3));
     }
   }, [settings]);
 
@@ -90,6 +92,7 @@ function SettingsPage() {
       default_interest_rate: Math.max(0, Number(interest) || 0),
       default_penalty_rate: Math.max(0, Number(penalty) || 0),
       default_max_tenure_months: Math.max(1, Number(maxTenure) || 1),
+      loan_limit_multiplier: Math.max(0, Number(loanLimitMult) || 0),
     };
     const { error } = await supabase
       .from("group_settings")
@@ -169,6 +172,22 @@ function SettingsPage() {
                   Applies to all members unless overridden below.
                 </p>
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="llm">Loan application limit (× total savings)</Label>
+              <Input
+                id="llm"
+                type="number"
+                min="0"
+                step="0.1"
+                required
+                value={loanLimitMult}
+                onChange={(e) => setLoanLimitMult(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Max a member can apply for = their total savings × this number.
+                E.g. 3 means a member with K1,000 saved can borrow up to K3,000.
+              </p>
             </div>
             <div className="pt-2">
               <Button type="submit" disabled={saving} className="gap-2">

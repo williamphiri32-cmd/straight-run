@@ -1,0 +1,1 @@
+ALTER TABLE public.group_settings ADD COLUMN IF NOT EXISTS loan_limit_multiplier numeric NOT NULL DEFAULT 3;

@@ -51,7 +51,7 @@ function PortalPage() {
             .order("created_at", { ascending: false }),
           supabase.from("share_out_allocations").select("*").eq("user_id", groupId!),
           supabase.from("members").select("id, name").eq("user_id", groupId!),
-          supabase.from("group_settings").select("default_max_tenure_months").eq("user_id", groupId!).maybeSingle(),
+          supabase.from("group_settings").select("default_max_tenure_months, loan_limit_multiplier").eq("user_id", groupId!).maybeSingle(),
           supabase.from("member_loan_limits").select("max_tenure_months").eq("user_id", groupId!).eq("member_id", me!.id).maybeSingle(),
         ]);
       return {
@@ -65,6 +65,7 @@ function PortalPage() {
           limitRes.data?.max_tenure_months ??
           settingsRes.data?.default_max_tenure_months ??
           12,
+        loanLimitMultiplier: Number((settingsRes.data as any)?.loan_limit_multiplier ?? 3),
       };
     },
   });
@@ -228,7 +229,7 @@ function PortalPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} groupSavings={stats?.groupSavings ?? 0} />
-        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} />
+        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} mySavings={stats?.mySavings ?? 0} loanLimitMultiplier={portal?.loanLimitMultiplier ?? 3} />
       </div>
 
       <Card className="p-5">
@@ -347,7 +348,9 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavings, loanLimitMultiplier }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number; mySavings: number; loanLimitMultiplier: number }) {
+  const personalLimit = mySavings * loanLimitMultiplier;
+  const effectiveMax = Math.max(0, Math.min(availableFunds, personalLimit));
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [insufficientOpen, setInsufficientOpen] = useState(false);
@@ -366,6 +369,10 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
     }
     if (termNum > maxTenure) {
       toast.error(`Max loan tenure for you is ${maxTenure} months`);
+      return;
+    }
+    if (loanLimitMultiplier > 0 && amt > personalLimit) {
+      toast.error(`You can apply for at most ${money(personalLimit)} (${loanLimitMultiplier}× your savings of ${money(mySavings)})`);
       return;
     }
     if (amt > availableFunds) {
@@ -416,15 +423,20 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure }: { me
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="a">Amount</Label>
-                <Input id="a" type="number" min="1" max={availableFunds} step="0.01" required value={amount} onChange={(e) => {
+                <Input id="a" type="number" min="1" max={effectiveMax} step="0.01" required value={amount} onChange={(e) => {
                   const v = Number(e.target.value);
-                  if (Number.isFinite(v) && v > availableFunds) {
-                    setAmount(String(availableFunds));
+                  if (Number.isFinite(v) && v > effectiveMax) {
+                    setAmount(String(effectiveMax));
                   } else {
                     setAmount(e.target.value);
                   }
                 }} />
-                <p className="text-[11px] text-muted-foreground">Max available: {money(availableFunds)}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Max you can apply for: {money(effectiveMax)}
+                  {loanLimitMultiplier > 0 && (
+                    <> · limit {loanLimitMultiplier}× savings ({money(personalLimit)})</>
+                  )}
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="t">Term (months)</Label>
