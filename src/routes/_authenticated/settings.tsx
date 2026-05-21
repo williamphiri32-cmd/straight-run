@@ -78,6 +78,7 @@ function SettingsPage() {
       setInterest(String(settings.default_interest_rate));
       setPenalty(String(settings.default_penalty_rate));
       setMaxTenure(String(settings.default_max_tenure_months ?? 12));
+      setLoanLimitMult(String((settings as any).loan_limit_multiplier ?? 3));
     }
   }, [settings]);
 
