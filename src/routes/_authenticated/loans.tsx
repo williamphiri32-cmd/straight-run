@@ -150,6 +150,15 @@ function LoansPage() {
     if (amt > available + 0.005) {
       return toast.error(`Insufficient group balance. Available: ${money(available)}`);
     }
+    const mult = Number((settings as any)?.loan_limit_multiplier ?? 0);
+    if (mult > 0) {
+      const personalLimit = Number(eligible.contributed ?? 0) * mult;
+      if (amt > personalLimit + 0.005) {
+        return toast.error(
+          `Exceeds member's loan limit (${mult}× savings = ${money(personalLimit)})`,
+        );
+      }
+    }
     const { error } = await supabase.from("loans").insert({
       user_id: user.id,
       member_id: memberId,
