@@ -53,13 +53,24 @@ function Dashboard() {
         const id = r.loan_id as string;
         repaidByLoan.set(id, (repaidByLoan.get(id) ?? 0) + Number(r.amount));
       }
-      let totalPenalties = 0;
+      let loanPenalties = 0;
       for (const loan of loans.data ?? []) {
         if (loan.status === "paid") continue;
         const repaid = repaidByLoan.get(loan.id) ?? 0;
         const stats = computeLoanStats(loan, repaid);
-        totalPenalties += stats.penalty;
+        loanPenalties += stats.penalty;
       }
+
+      const offencePenalties = (contribs.data ?? []).reduce((acc, c: any) => {
+        const amt = Number(c.amount ?? 0);
+        const note = String(c.note ?? "");
+        if (amt < 0 && note.toLowerCase().startsWith("offence penalty")) {
+          return acc + Math.abs(amt);
+        }
+        return acc;
+      }, 0);
+
+      const totalPenalties = loanPenalties + offencePenalties;
 
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
