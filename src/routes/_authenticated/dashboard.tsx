@@ -124,6 +124,7 @@ function Dashboard() {
           : undefined,
     },
     { label: "Outstanding loans", value: money(data?.outstanding), icon: Banknote },
+    { label: "Penalties", value: money(data?.totalPenalties), icon: AlertTriangle },
     { label: "Members", value: String(data?.memberCount ?? 0), icon: Users },
   ];
 
@@ -138,7 +139,7 @@ function Dashboard() {
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         {stats.map(({ label, value, icon: Icon, hl, sub }) => (
           <Card
             key={label}
