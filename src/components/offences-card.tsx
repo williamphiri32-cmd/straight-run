@@ -5,7 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Gavel, Save, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Gavel, Save, Trash2, ArrowUp, ArrowDown, MinusCircle } from "lucide-react";
 import { toast } from "sonner";
 
 type Offence = {
