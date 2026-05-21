@@ -61,7 +61,7 @@ function LoansPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("group_settings")
-        .select("default_interest_rate, default_penalty_rate")
+        .select("default_interest_rate, default_penalty_rate, loan_limit_multiplier")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
