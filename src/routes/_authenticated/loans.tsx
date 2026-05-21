@@ -267,7 +267,7 @@ function LoansPage() {
         <Card className="p-12 text-center">
           <p className="text-sm text-muted-foreground">
             {members && members.length === 0
-              ? "Add a member first, then you can issue a loan."
+              ? "No eligible borrowers yet. Members must record a contribution before they can take a loan."
               : "No loans yet."}
           </p>
         </Card>
