@@ -135,7 +135,7 @@ function Dashboard() {
           : undefined,
     },
     { label: "Outstanding loans", value: money(data?.outstanding), icon: Banknote },
-    { label: "Penalties", value: money(data?.totalPenalties), icon: AlertTriangle },
+    { label: "Penalties", value: money(data?.totalPenalties), icon: AlertTriangle, danger: true },
     { label: "Members", value: String(data?.memberCount ?? 0), icon: Users },
   ];
 
