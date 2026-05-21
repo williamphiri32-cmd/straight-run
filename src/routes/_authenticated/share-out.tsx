@@ -62,6 +62,25 @@ function ShareOutPage() {
     },
   });
 
+  // Raw contributions, loans and repayments for end-of-cycle profit calc.
+  const { data: cycleData } = useQuery({
+    queryKey: ["cycle-data", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [c, l, r] = await Promise.all([
+        supabase
+          .from("contributions")
+          .select("member_id, amount, contribution_date"),
+        supabase.from("loans").select("id, principal, interest_rate, penalty_rate"),
+        supabase.from("repayments").select("loan_id, amount, paid_date"),
+      ]);
+      if (c.error) throw c.error;
+      if (l.error) throw l.error;
+      if (r.error) throw r.error;
+      return { contributions: c.data ?? [], loans: l.data ?? [], repayments: r.data ?? [] };
+    },
+  });
+
   const memberSavings = useMemo(() => {
     return (members ?? []).map((m) => ({
       id: m.id,
