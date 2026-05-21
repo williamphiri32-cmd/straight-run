@@ -203,11 +203,7 @@ function PortalPage() {
           icon={<Gift className="h-4 w-4" />}
           label="Projected share-out"
           value={money(stats?.projectedShare ?? 0)}
-          hint={
-            (stats?.projectedProfit ?? 0) > 0
-              ? `Savings + ${money(stats!.projectedProfit)} profit & penalties`
-              : "Savings + share of interest & penalties"
-          }
+          hint={`Your share of group balance ${money(stats?.availableFunds ?? 0)}`}
           extra={
             <div className="mt-2 border-t pt-2">
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
