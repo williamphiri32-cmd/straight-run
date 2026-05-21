@@ -384,10 +384,11 @@ function ShareOutPage() {
             Group balance
           </p>
           <p className="mt-2 font-display text-2xl font-semibold tabular-nums">
-            {money(groupBalance)}
+            {money(availableFunds)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Savings {money(totalSaved)} − outstanding loans {money(outstanding)}
+            Savings {money(totalSaved)} − outstanding principal{" "}
+            {money(Math.max(0, totalLent - totalRepaid))}
           </p>
         </Card>
         <Card className="p-5">
