@@ -22,7 +22,7 @@ import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lu
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
 import { computeLoanStats } from "@/lib/penalty";
-import { computeCyclePayouts } from "@/lib/payout";
+
 
 export const Route = createFileRoute("/_authenticated/portal")({
   head: () => ({ meta: [{ title: "My Portal — Kijiji" }] }),
@@ -115,21 +115,20 @@ function PortalPage() {
       0,
     );
 
-    // Live projected payout = total contributions + monthly profit share
-    // (loan interest + penalties collected, allocated by monthly contribution ratio).
-    const groupOutstanding = portal.loans.reduce((a, l: any) => {
-      const repaid = repaysByLoan.get(l.id) ?? 0;
-      return a + computeLoanStats(l, repaid).totalOwed;
-    }, 0);
-    const cycle = computeCyclePayouts(
-      portal.allMembers.map((m: any) => ({ id: m.id })),
-      portal.contributions as any,
-      portal.repayments as any,
-      portal.loans as any,
+    // Live projected payout = my savings + my share of group profit pool.
+    // Profit pool = interest on all loans (full cycle) + penalties accrued so far.
+    const groupInterest = portal.loans.reduce(
+      (a, l: any) => a + Number(l.principal) * (Number(l.interest_rate) || 0) / 100,
+      0,
     );
-    const myPayout = cycle.perMember.find((p) => p.member_id === me.id);
-    const projectedShare = myPayout?.total ?? mySavings;
-    const projectedProfit = myPayout?.profit ?? 0;
+    const groupPenalties = portal.loans.reduce((a, l: any) => {
+      const repaid = repaysByLoan.get(l.id) ?? 0;
+      return a + computeLoanStats(l, repaid).penalty;
+    }, 0);
+    const profitPool = groupInterest + groupPenalties;
+    const myRatio = groupSavings > 0 ? mySavings / groupSavings : 0;
+    const projectedProfit = profitPool * myRatio;
+    const projectedShare = mySavings + projectedProfit;
 
     // Available funds = group cash balance, matches dashboard (savings − principal owed)
     const totalLent = portal.loans.reduce((a, l: any) => a + Number(l.principal), 0);
@@ -202,8 +201,8 @@ function PortalPage() {
           value={money(stats?.projectedShare ?? 0)}
           hint={
             (stats?.projectedProfit ?? 0) > 0
-              ? `Savings + ${money(stats!.projectedProfit)} profit`
-              : "Contributions + monthly profit share"
+              ? `Savings + ${money(stats!.projectedProfit)} profit & penalties`
+              : "Savings + share of interest & penalties"
           }
         />
       </div>
