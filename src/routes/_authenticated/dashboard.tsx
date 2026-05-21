@@ -38,6 +38,21 @@ function Dashboard() {
       const outstanding = totalLent - totalRepaid;
       const balance = totalSavings - outstanding;
       const activeLoans = (loans.data ?? []).filter((l) => l.status !== "paid").length;
+
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const memberIdsWithContribThisMonth = new Set(
+        (contribs.data ?? [])
+          .filter((c: any) => {
+            const d = new Date(c.contribution_date);
+            return d >= monthStart && d < monthEnd;
+          })
+          .map((c: any) => c.member_id),
+      );
+      const totalMembers = (members.data ?? []).length;
+      const contributedCount = memberIdsWithContribThisMonth.size;
+
       const recent = [
         ...(contribs.data ?? []).map((c: any) => ({
           kind: "Contribution",
@@ -56,12 +71,14 @@ function Dashboard() {
         .sort((a, b) => (a.date < b.date ? 1 : -1))
         .slice(0, 6);
       return {
-        memberCount: (members.data ?? []).length,
+        memberCount: totalMembers,
         totalSavings,
         outstanding,
         balance,
         activeLoans,
         recent,
+        contributedCount,
+        notContributedCount: totalMembers - contributedCount,
       };
     },
   });
