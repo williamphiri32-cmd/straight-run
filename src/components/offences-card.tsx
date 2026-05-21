@@ -92,6 +92,7 @@ export function OffencesCard({ userId }: { userId?: string }) {
     qc.invalidateQueries({ queryKey: ["contributions"] });
     qc.invalidateQueries({ queryKey: ["members"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
+    qc.invalidateQueries({ queryKey: ["portal"] });
   };
 
   const seed = async () => {
