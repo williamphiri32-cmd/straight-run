@@ -112,6 +112,8 @@ function Dashboard() {
     { label: "Members", value: String(data?.memberCount ?? 0), icon: Users },
   ];
 
+  const [showContrib, setShowContrib] = useState(false);
+
   return (
     <div className="space-y-6">
       <header>
@@ -137,13 +139,63 @@ function Dashboard() {
               {value}
             </p>
             {sub && (
-              <p className={`mt-1 text-xs ${hl ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+              <button
+                onClick={() => setShowContrib(true)}
+                className={`mt-1 text-xs cursor-pointer underline hover:no-underline ${hl ? "text-primary-foreground/80" : "text-muted-foreground"}`}
+              >
                 {sub}
-              </p>
+              </button>
             )}
           </Card>
         ))}
       </div>
+
+      <Dialog open={showContrib} onOpenChange={setShowContrib}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Contributions this month</DialogTitle>
+            <DialogDescription>
+              Members who contributed and those who have not.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div>
+              <h4 className="text-sm font-medium mb-2">
+                Contributed ({data?.contributedCount ?? 0})
+              </h4>
+              {data && data.contributedMembers.length > 0 ? (
+                <ul className="space-y-1">
+                  {data.contributedMembers.map((name) => (
+                    <li key={name} className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {name}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No contributions yet.</p>
+              )}
+            </div>
+            <div className="border-t pt-3">
+              <h4 className="text-sm font-medium mb-2">
+                Not contributed ({data?.notContributedCount ?? 0})
+              </h4>
+              {data && data.notContributedMembers.length > 0 ? (
+                <ul className="space-y-1">
+                  {data.notContributedMembers.map((name) => (
+                    <li key={name} className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500" />
+                      {name}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">All members contributed.</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card className="p-6">
         <div className="mb-4 flex items-center justify-between">
