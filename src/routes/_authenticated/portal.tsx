@@ -371,6 +371,10 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       toast.error(`Max loan tenure for you is ${maxTenure} months`);
       return;
     }
+    if (loanLimitMultiplier > 0 && amt > personalLimit) {
+      toast.error(`You can apply for at most ${money(personalLimit)} (${loanLimitMultiplier}× your savings of ${money(mySavings)})`);
+      return;
+    }
     if (amt > availableFunds) {
       setOpen(false);
       setInsufficientOpen(true);
