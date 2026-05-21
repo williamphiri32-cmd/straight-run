@@ -82,7 +82,7 @@ export function SavingsInactivityCard({ userId }: { userId?: string }) {
     toast.success(`Deducted ZMW ${rule.penalty_amount} from ${member?.name ?? "member"}`);
     qc.invalidateQueries({ queryKey: ["contributions"] });
   };
-
+  const seed = async () => {
     if (!userId) return;
     const rows = DEFAULTS.map((r) => ({ ...r, user_id: userId }));
     const { error } = await supabase.from("savings_inactivity_rules").insert(rows);
