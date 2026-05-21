@@ -21,7 +21,8 @@ import { PaymentMethodSelect, type PaymentMethod } from "@/components/payment-me
 import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
-import { computeLoanStats, projectShareOut } from "@/lib/penalty";
+import { computeLoanStats } from "@/lib/penalty";
+import { computeCyclePayouts } from "@/lib/payout";
 
 export const Route = createFileRoute("/_authenticated/portal")({
   head: () => ({ meta: [{ title: "My Portal — Kijiji" }] }),
@@ -114,13 +115,21 @@ function PortalPage() {
       0,
     );
 
-    // crude projected share-out: assume pool = remaining group savings - outstanding loans
+    // Live projected payout = total contributions + monthly profit share
+    // (loan interest + penalties collected, allocated by monthly contribution ratio).
     const groupOutstanding = portal.loans.reduce((a, l: any) => {
       const repaid = repaysByLoan.get(l.id) ?? 0;
       return a + computeLoanStats(l, repaid).totalOwed;
     }, 0);
-    const projectedPool = Math.max(0, groupSavings + groupOutstanding * 0); // pool = savings (loans count as receivable)
-    const projectedShare = projectShareOut(mySavings, groupSavings, projectedPool);
+    const cycle = computeCyclePayouts(
+      portal.allMembers.map((m: any) => ({ id: m.id })),
+      portal.contributions as any,
+      portal.repayments as any,
+      portal.loans as any,
+    );
+    const myPayout = cycle.perMember.find((p) => p.member_id === me.id);
+    const projectedShare = myPayout?.total ?? mySavings;
+    const projectedProfit = myPayout?.profit ?? 0;
 
     // Available funds = group cash balance, matches dashboard (savings − principal owed)
     const totalLent = portal.loans.reduce((a, l: any) => a + Number(l.principal), 0);
@@ -137,6 +146,7 @@ function PortalPage() {
       outstanding,
       totalPenalties,
       projectedShare,
+      projectedProfit,
       availableFunds,
     };
   }, [portal, me]);
