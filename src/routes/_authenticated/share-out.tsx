@@ -19,6 +19,8 @@ import {
 import { Gift, Sparkles, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
+import { computeLoanStats } from "@/lib/penalty";
+
 
 
 export const Route = createFileRoute("/_authenticated/share-out")({
@@ -62,7 +64,7 @@ function ShareOutPage() {
     },
   });
 
-  // Raw contributions, loans and repayments for end-of-cycle profit calc.
+  // Raw contributions, loans and repayments for pool calc (mirrors portal logic).
   const { data: cycleData } = useQuery({
     queryKey: ["cycle-data", user?.id],
     enabled: !!user,
@@ -70,8 +72,12 @@ function ShareOutPage() {
       const [c, l, r] = await Promise.all([
         supabase
           .from("contributions")
-          .select("member_id, amount, contribution_date"),
-        supabase.from("loans").select("id, principal, interest_rate, penalty_rate"),
+          .select("member_id, amount, contribution_date, note"),
+        supabase
+          .from("loans")
+          .select(
+            "id, principal, interest_rate, penalty_rate, penalty_period_days, due_date, status",
+          ),
         supabase.from("repayments").select("loan_id, amount, paid_date"),
       ]);
       if (c.error) throw c.error;
@@ -92,12 +98,21 @@ function ShareOutPage() {
   const totalSaved = memberSavings.reduce((a, m) => a + m.saved, 0);
 
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"cycle" | "manual">("cycle");
+  const [mode, setMode] = useState<"projected" | "actual" | "manual">("projected");
   const [pool, setPool] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
 
   const poolNum = Number(pool) || 0;
+
+  // Mirrors portal.tsx pool math
+  const repaysByLoan = useMemo(() => {
+    const m = new Map<string, number>();
+    (cycleData?.repayments ?? []).forEach((r: any) => {
+      m.set(r.loan_id, (m.get(r.loan_id) ?? 0) + Number(r.amount));
+    });
+    return m;
+  }, [cycleData]);
 
   const totalLent = (cycleData?.loans ?? []).reduce(
     (a: number, l: any) => a + Number(l.principal ?? 0),
@@ -107,8 +122,38 @@ function ShareOutPage() {
     (a: number, r: any) => a + Number(r.amount ?? 0),
     0,
   );
-  const outstanding = Math.max(0, totalLent - totalRepaid);
-  const groupBalance = Math.max(0, totalSaved - outstanding);
+  const availableFunds = Math.max(0, totalSaved - (totalLent - totalRepaid));
+
+  const groupOutstanding = (cycleData?.loans ?? []).reduce((a: number, l: any) => {
+    const repaid = repaysByLoan.get(l.id) ?? 0;
+    return a + computeLoanStats(l, repaid).totalOwed;
+  }, 0);
+  const loanPenalties = (cycleData?.loans ?? []).reduce((a: number, l: any) => {
+    const repaid = repaysByLoan.get(l.id) ?? 0;
+    return a + computeLoanStats(l, repaid).penalty;
+  }, 0);
+  const appliedPenalties = (cycleData?.contributions ?? []).reduce(
+    (total: number, c: any) => {
+      const noteStr = String(c.note ?? "").toLowerCase();
+      const amount = Number(c.amount);
+      if (
+        amount < 0 &&
+        (noteStr.startsWith("offence penalty") ||
+          noteStr.startsWith("inactivity penalty"))
+      ) {
+        return total + Math.abs(amount);
+      }
+      return total;
+    },
+    0,
+  );
+  const groupPenalties = loanPenalties + appliedPenalties;
+
+  const projectedPool = availableFunds;
+  const actualPool = groupOutstanding + availableFunds + groupPenalties;
+
+  const cyclePool =
+    mode === "actual" ? actualPool : mode === "projected" ? projectedPool : 0;
 
   const cycleRows = useMemo(() => {
     return memberSavings.map((m) => {
@@ -117,11 +162,10 @@ function ShareOutPage() {
         id: m.id,
         name: m.name,
         contributions: m.saved,
-        profit: 0,
-        share: ratio * groupBalance,
+        share: ratio * cyclePool,
       };
     });
-  }, [memberSavings, totalSaved, groupBalance]);
+  }, [memberSavings, totalSaved, cyclePool]);
 
   const manualRows = memberSavings.map((m) => ({
     ...m,
@@ -129,14 +173,12 @@ function ShareOutPage() {
   }));
 
   const preview =
-    mode === "cycle"
-      ? cycleRows.map((r) => ({ id: r.id, name: r.name, share: r.share }))
-      : manualRows;
+    mode === "manual"
+      ? manualRows
+      : cycleRows.map((r) => ({ id: r.id, name: r.name, share: r.share }));
 
-  const totalToDistribute =
-    mode === "cycle"
-      ? cycleRows.reduce((a, r) => a + r.share, 0)
-      : poolNum;
+  const totalToDistribute = mode === "manual" ? poolNum : cyclePool;
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,10 +186,15 @@ function ShareOutPage() {
     if (totalSaved <= 0) return toast.error("No savings to distribute");
     if (totalToDistribute <= 0)
       return toast.error(
-        mode === "cycle"
-          ? "Nothing to pay out yet"
-          : "Enter a pool amount",
+        mode === "manual" ? "Enter a pool amount" : "Nothing to pay out yet",
       );
+
+    const autoNote =
+      mode === "projected"
+        ? "Projected share-out (group balance distributed by savings ratio)"
+        : mode === "actual"
+          ? "Actual projected share-out (outstanding loans + group balance + penalties)"
+          : null;
 
     const { data: so, error } = await supabase
       .from("share_outs")
@@ -155,11 +202,7 @@ function ShareOutPage() {
         user_id: user.id,
         share_out_date: date,
         total_amount: Number(totalToDistribute.toFixed(2)),
-        note:
-          note ||
-          (mode === "cycle"
-            ? "End-of-cycle payout (contributions + monthly profit shares)"
-            : null),
+        note: note || autoNote,
       })
       .select()
       .single();
@@ -211,36 +254,36 @@ function ShareOutPage() {
               <DialogTitle>New share-out</DialogTitle>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-4">
-              <div className="flex gap-2 rounded-md border border-border bg-muted/30 p-1">
-                <button
-                  type="button"
-                  onClick={() => setMode("cycle")}
-                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
-                    mode === "cycle"
-                      ? "bg-background shadow-sm"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  End-of-cycle (auto)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("manual")}
-                  className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition ${
-                    mode === "manual"
-                      ? "bg-background shadow-sm"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  Manual pool
-                </button>
+              <div className="flex gap-1 rounded-md border border-border bg-muted/30 p-1">
+                {(["projected", "actual", "manual"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode(m)}
+                    className={`flex-1 rounded px-2 py-1.5 text-xs font-medium capitalize transition ${
+                      mode === m ? "bg-background shadow-sm" : "text-muted-foreground"
+                    }`}
+                  >
+                    {m === "projected"
+                      ? "Projected"
+                      : m === "actual"
+                        ? "Actual projected"
+                        : "Manual"}
+                  </button>
+                ))}
               </div>
 
-              {mode === "cycle" ? (
+              {mode === "projected" ? (
                 <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-                  The current group balance ({money(groupBalance)} = savings −
-                  outstanding loans) is shared out to members in proportion to
-                  what each has saved.
+                  Group balance ({money(projectedPool)} = savings −
+                  outstanding loan principal) split by each member's savings
+                  ratio.
+                </div>
+              ) : mode === "actual" ? (
+                <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  Actual pool ({money(actualPool)} = outstanding loans owed +
+                  group balance + penalties) split by each member's savings
+                  ratio.
                 </div>
               ) : null}
 
@@ -288,14 +331,14 @@ function ShareOutPage() {
 
               <div className="rounded-md border border-border bg-muted/30 p-3">
                 <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-                  {mode === "cycle" ? (
-                    <Calculator className="h-3.5 w-3.5" />
-                  ) : (
+                  {mode === "manual" ? (
                     <Sparkles className="h-3.5 w-3.5" />
+                  ) : (
+                    <Calculator className="h-3.5 w-3.5" />
                   )}
                   Preview
                 </div>
-                {mode === "cycle" ? (
+                {mode !== "manual" ? (
                   <ul className="max-h-56 space-y-1.5 overflow-auto text-sm">
                     {cycleRows.map((p) => (
                       <li key={p.id} className="flex items-center justify-between gap-3">
@@ -303,7 +346,6 @@ function ShareOutPage() {
                           <p className="truncate font-medium">{p.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {money(p.contributions)} saved
-                            {p.profit > 0 ? ` + ${money(p.profit)} profit` : ""}
                           </p>
                         </div>
                         <span className="font-display tabular-nums text-primary">
@@ -342,10 +384,11 @@ function ShareOutPage() {
             Group balance
           </p>
           <p className="mt-2 font-display text-2xl font-semibold tabular-nums">
-            {money(groupBalance)}
+            {money(availableFunds)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Savings {money(totalSaved)} − outstanding loans {money(outstanding)}
+            Savings {money(totalSaved)} − outstanding principal{" "}
+            {money(Math.max(0, totalLent - totalRepaid))}
           </p>
         </Card>
         <Card className="p-5">
