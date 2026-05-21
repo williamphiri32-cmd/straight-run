@@ -173,6 +173,22 @@ function SettingsPage() {
                 </p>
               </div>
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="llm">Loan application limit (× total savings)</Label>
+              <Input
+                id="llm"
+                type="number"
+                min="0"
+                step="0.1"
+                required
+                value={loanLimitMult}
+                onChange={(e) => setLoanLimitMult(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Max a member can apply for = their total savings × this number.
+                E.g. 3 means a member with K1,000 saved can borrow up to K3,000.
+              </p>
+            </div>
             <div className="pt-2">
               <Button type="submit" disabled={saving} className="gap-2">
                 <SettingsIcon className="h-4 w-4" />
