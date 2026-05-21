@@ -30,7 +30,7 @@ function Dashboard() {
       const [members, contribs, loans, repays] = await Promise.all([
         supabase.from("members").select("id, name"),
         supabase.from("contributions").select("amount, contribution_date, member_id, note"),
-        supabase.from("loans").select("id, principal, status, member_id, issued_date"),
+        supabase.from("loans").select("id, principal, status, member_id, issued_date, due_date, interest_rate, penalty_rate, penalty_period_days"),
         supabase.from("repayments").select("amount, paid_date, loan_id"),
       ]);
       const memberName = new Map(
@@ -47,6 +47,19 @@ function Dashboard() {
       const outstanding = totalLent - totalRepaid;
       const balance = totalSavings - outstanding;
       const activeLoans = (loans.data ?? []).filter((l) => l.status !== "paid").length;
+
+      const repaidByLoan = new Map<string, number>();
+      for (const r of repays.data ?? []) {
+        const id = r.loan_id as string;
+        repaidByLoan.set(id, (repaidByLoan.get(id) ?? 0) + Number(r.amount));
+      }
+      let totalPenalties = 0;
+      for (const loan of loans.data ?? []) {
+        if (loan.status === "paid") continue;
+        const repaid = repaidByLoan.get(loan.id) ?? 0;
+        const stats = computeLoanStats(loan, repaid);
+        totalPenalties += stats.penalty;
+      }
 
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
