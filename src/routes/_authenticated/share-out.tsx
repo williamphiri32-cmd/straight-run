@@ -19,6 +19,8 @@ import {
 import { Gift, Sparkles, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
+import { computeLoanStats } from "@/lib/penalty";
+
 
 
 export const Route = createFileRoute("/_authenticated/share-out")({
