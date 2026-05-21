@@ -135,7 +135,15 @@ function PortalPage() {
     const totalRepaid = portal.repayments.reduce((a, r: any) => a + Number(r.amount), 0);
     const availableFunds = Math.max(0, groupSavings - (totalLent - totalRepaid));
 
-
+    // Actual projected share-out = member's ratio of (outstanding loans + group balance + penalties)
+    const groupOutstanding = loansWithStats.length
+      ? portal.loans.reduce((a, l: any) => {
+          const repaid = repaysByLoan.get(l.id) ?? 0;
+          return a + computeLoanStats(l, repaid).totalOwed;
+        }, 0)
+      : 0;
+    const actualPool = groupOutstanding + availableFunds + groupPenalties;
+    const actualProjectedShare = actualPool * myRatio;
 
     return {
       mySavings,
@@ -147,6 +155,8 @@ function PortalPage() {
       projectedShare,
       projectedProfit,
       availableFunds,
+      actualProjectedShare,
+      actualPool,
     };
   }, [portal, me]);
 
@@ -203,6 +213,19 @@ function PortalPage() {
             (stats?.projectedProfit ?? 0) > 0
               ? `Savings + ${money(stats!.projectedProfit)} profit & penalties`
               : "Savings + share of interest & penalties"
+          }
+          extra={
+            <div className="mt-2 border-t pt-2">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Actual projected share-out
+              </p>
+              <p className="font-display text-base tabular-nums sm:text-lg">
+                {money(stats?.actualProjectedShare ?? 0)}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Your share of pool {money(stats?.actualPool ?? 0)} (outstanding loans + group balance + penalties)
+              </p>
+            </div>
           }
         />
       </div>
@@ -283,12 +306,14 @@ function StatCard({
   value,
   hint,
   tone = "default",
+  extra,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   hint?: string;
   tone?: "default" | "warn";
+  extra?: React.ReactNode;
 }) {
   return (
     <Card className="p-5">
@@ -304,6 +329,7 @@ function StatCard({
         {value}
       </p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {extra}
     </Card>
   );
 }
