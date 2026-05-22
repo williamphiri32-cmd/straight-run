@@ -456,9 +456,11 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
         />
 
         <div className="flex flex-wrap justify-between gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="gap-2">
-            <Paperclip className="h-4 w-4" /> Attach
-          </Button>
+          {category !== "poll" ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="gap-2">
+              <Paperclip className="h-4 w-4" /> Attach
+            </Button>
+          ) : <span />}
           <div className="flex gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={submitting} className="gap-2">
