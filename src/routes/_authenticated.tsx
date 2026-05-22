@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
-import { Sprout, LayoutDashboard, Users, Banknote, LogOut, Gift, User, Inbox, Settings } from "lucide-react";
+import { Sprout, LayoutDashboard, Users, Banknote, LogOut, Gift, User, Inbox, Settings, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -30,6 +30,7 @@ function AuthLayout() {
   const nav = [
     { to: "/portal", label: "My Portal", icon: User },
     { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { to: "/community", label: "Community", icon: MessageSquare },
     { to: "/members", label: "Members", icon: Users },
     { to: "/loans", label: "Loans", icon: Banknote },
     ...(isTreasurer
