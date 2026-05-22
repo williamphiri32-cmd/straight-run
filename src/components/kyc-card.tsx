@@ -77,7 +77,8 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
     setIdNumber(kyc?.id_number ?? "");
     setDob(kyc?.date_of_birth ?? "");
     setAddress(kyc?.address ?? "");
-    setIdDoc(null);
+    setIdFront(null);
+    setIdBack(null);
     setSelfie(null);
   }, [open, kyc]);
 
