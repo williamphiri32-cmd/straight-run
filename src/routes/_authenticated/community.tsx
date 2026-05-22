@@ -737,3 +737,88 @@ function PostCard({
     </Card>
   );
 }
+
+function PollSection({
+  options, votes, postId, groupId, currentMemberId,
+}: {
+  options: any[];
+  votes: any[];
+  postId: string;
+  groupId: string;
+  currentMemberId: string;
+}) {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const myVote = votes.find((v) => v.member_id === currentMemberId);
+  const total = votes.length;
+
+  const vote = async (optionId: string) => {
+    if (busy) return;
+    setBusy(true);
+    if (myVote) {
+      if (myVote.option_id === optionId) {
+        const { error } = await supabase.from("post_poll_votes" as any).delete().eq("id", myVote.id);
+        if (error) toast.error(error.message);
+      } else {
+        const { error } = await supabase
+          .from("post_poll_votes" as any)
+          .update({ option_id: optionId } as any)
+          .eq("id", myVote.id);
+        if (error) toast.error(error.message);
+      }
+    } else {
+      const { error } = await supabase.from("post_poll_votes" as any).insert({
+        post_id: postId,
+        option_id: optionId,
+        user_id: groupId,
+        member_id: currentMemberId,
+      } as any);
+      if (error) toast.error(error.message);
+    }
+    setBusy(false);
+    qc.invalidateQueries({ queryKey: ["community", groupId] });
+  };
+
+  if (options.length === 0) {
+    return <p className="mt-3 text-xs text-muted-foreground italic">No options yet.</p>;
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      {options.map((o) => {
+        const count = votes.filter((v) => v.option_id === o.id).length;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        const mine = myVote?.option_id === o.id;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            disabled={busy}
+            onClick={() => vote(o.id)}
+            className={`group relative w-full overflow-hidden rounded-md border px-3 py-2 text-left text-sm transition-colors ${
+              mine ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+            }`}
+          >
+            <div
+              className={`absolute inset-y-0 left-0 transition-all ${mine ? "bg-primary/15" : "bg-muted"}`}
+              style={{ width: `${pct}%` }}
+              aria-hidden
+            />
+            <div className="relative flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-2 font-medium">
+                {mine && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                {o.text}
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {count} · {pct}%
+              </span>
+            </div>
+          </button>
+        );
+      })}
+      <p className="text-[11px] text-muted-foreground">
+        {total} {total === 1 ? "vote" : "votes"}{myVote ? " · tap your choice again to remove" : ""}
+      </p>
+    </div>
+  );
+}
