@@ -65,7 +65,8 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
   const [idNumber, setIdNumber] = useState("");
   const [dob, setDob] = useState("");
   const [address, setAddress] = useState("");
-  const [idDoc, setIdDoc] = useState<File | null>(null);
+  const [idFront, setIdFront] = useState<File | null>(null);
+  const [idBack, setIdBack] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -76,7 +77,8 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
     setIdNumber(kyc?.id_number ?? "");
     setDob(kyc?.date_of_birth ?? "");
     setAddress(kyc?.address ?? "");
-    setIdDoc(null);
+    setIdFront(null);
+    setIdBack(null);
     setSelfie(null);
   }, [open, kyc]);
 
@@ -103,7 +105,12 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
     try {
       let id_document_path = kyc?.id_document_path ?? null;
       let selfie_path = kyc?.selfie_path ?? null;
-      if (idDoc) id_document_path = await upload(idDoc, "id");
+      if (idFront || idBack) {
+        const existing = (() => { try { return JSON.parse(id_document_path ?? ""); } catch { return id_document_path ? { front: id_document_path } : {}; } })() as { front?: string; back?: string };
+        if (idFront) existing.front = await upload(idFront, "id-front");
+        if (idBack) existing.back = await upload(idBack, "id-back");
+        id_document_path = JSON.stringify(existing);
+      }
       if (selfie) selfie_path = await upload(selfie, "selfie");
 
       const payload = {
@@ -232,9 +239,14 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="iddoc">ID document (image/PDF)</Label>
-                  <Input id="iddoc" type="file" accept="image/*,application/pdf" onChange={(e) => setIdDoc(e.target.files?.[0] ?? null)} />
-                  {kyc?.id_document_path && !idDoc && <p className="text-[11px] text-muted-foreground">Current file on record</p>}
+                  <Label htmlFor="idfront">ID front (camera)</Label>
+                  <Input id="idfront" type="file" accept="image/*" capture="environment" onChange={(e) => setIdFront(e.target.files?.[0] ?? null)} />
+                  {kyc?.id_document_path && !idFront && <p className="text-[11px] text-muted-foreground">Front on record</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="idback">ID back (camera)</Label>
+                  <Input id="idback" type="file" accept="image/*" capture="environment" onChange={(e) => setIdBack(e.target.files?.[0] ?? null)} />
+                  {kyc?.id_document_path && !idBack && <p className="text-[11px] text-muted-foreground">Back on record</p>}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="self">Selfie</Label>
