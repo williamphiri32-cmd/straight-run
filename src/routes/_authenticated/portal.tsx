@@ -500,6 +500,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
               </Select>
               {purposeCategory === "other" && (
                 <Textarea
+                  required
                   value={customPurpose}
                   onChange={(e) => setCustomPurpose(e.target.value)}
                   placeholder="Please specify the purpose"
