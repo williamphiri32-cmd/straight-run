@@ -108,10 +108,27 @@ export function KycReviewCard({ userId }: { userId?: string }) {
                 : r.status === "rejected"
                   ? ShieldAlert
                   : ShieldQuestion;
+            if (r.status === "verified") {
+              return (
+                <li key={r.id} className="flex items-center gap-2 py-1.5 text-sm">
+                  <span className="font-medium truncate">{(r as any).memberName}</span>
+                  <span className="min-w-0 truncate text-xs text-muted-foreground">
+                    · {r.id_type ?? "—"} · {r.id_number ?? "—"}
+                  </span>
+                  <span className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${meta.cls}`}>
+                    <Icon className="h-3 w-3" />
+                    {meta.label}
+                  </span>
+                  <Button size="sm" variant="ghost" onClick={() => setOpenId(r.id)} className="h-7 w-7 p-0">
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
+                </li>
+              );
+            }
             return (
               <li key={r.id} className="flex flex-wrap items-center gap-3 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{r.memberName}</p>
+                  <p className="font-medium truncate">{(r as any).memberName}</p>
                   <p className="text-xs text-muted-foreground">
                     {r.id_type ?? "—"} · {r.id_number ?? "—"}
                   </p>
