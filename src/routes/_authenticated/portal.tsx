@@ -386,12 +386,15 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       setInsufficientOpen(true);
       return;
     }
+    const finalPurpose = purposeCategory === "other"
+      ? (customPurpose.trim() || "Other")
+      : purposeCategory || null;
     const { error } = await supabase.from("loan_applications").insert({
       user_id: groupId,
       member_id: memberId,
       amount: amt,
       term_months: Number(term),
-      purpose: purpose || null,
+      purpose: finalPurpose,
       status: "pending",
     });
     if (error) return toast.error(error.message);
@@ -399,7 +402,8 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
     setOpen(false);
     setAmount("");
     setTerm("3");
-    setPurpose("");
+    setPurposeCategory("");
+    setCustomPurpose("");
     qc.invalidateQueries({ queryKey: ["portal"] });
     qc.invalidateQueries({ queryKey: ["applications"] });
   };
