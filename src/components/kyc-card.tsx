@@ -41,7 +41,7 @@ type KycRow = {
   reviewed_at: string | null;
 };
 
-const ID_TYPES = ["National ID", "Passport", "Driver's License", "Voter ID"];
+const ID_TYPES = ["NRC"];
 
 export function KycCard({ memberId, groupId }: { memberId: string; groupId: string }) {
   const qc = useQueryClient();
