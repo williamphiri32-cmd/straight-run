@@ -30,6 +30,8 @@ import {
   X,
   FileIcon,
   Play,
+  Vote,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,13 +40,14 @@ export const Route = createFileRoute("/_authenticated/community")({
   component: CommunityPage,
 });
 
-type Category = "idea" | "journal" | "question" | "announcement";
+type Category = "idea" | "journal" | "question" | "announcement" | "poll";
 
 const CATEGORIES: { value: Category; label: string; icon: typeof Lightbulb; tone: string }[] = [
   { value: "idea", label: "Business Idea", icon: Lightbulb, tone: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
   { value: "journal", label: "Journal", icon: BookOpen, tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
   { value: "question", label: "Question", icon: HelpCircle, tone: "bg-sky-500/15 text-sky-700 dark:text-sky-400" },
   { value: "announcement", label: "Announcement", icon: Megaphone, tone: "bg-rose-500/15 text-rose-700 dark:text-rose-400" },
+  { value: "poll", label: "Poll", icon: Vote, tone: "bg-violet-500/15 text-violet-700 dark:text-violet-400" },
 ];
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
