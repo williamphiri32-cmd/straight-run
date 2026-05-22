@@ -346,7 +346,7 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
 
     setSubmitting(false);
     toast.success("Posted");
-    setTitle(""); setContent(""); setCategory("idea"); setFiles([]); setOpen(false);
+    setTitle(""); setContent(""); setCategory("idea"); setFiles([]); setPollOptions(["", ""]); setOpen(false);
     qc.invalidateQueries({ queryKey: ["community", groupId] });
   };
 
