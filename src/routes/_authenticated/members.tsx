@@ -15,7 +15,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, UserPlus, Coins } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
 
@@ -160,12 +160,9 @@ function MembersPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Saved</p>
-                    <p className="font-display tabular-nums">{money(total)}</p>
-                  </div>
-                  <ContributeButton memberId={m.id} memberName={m.name} />
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Saved</p>
+                  <p className="font-display tabular-nums">{money(total)}</p>
                 </div>
               </Card>
             );
@@ -176,58 +173,3 @@ function MembersPage() {
   );
 }
 
-function ContributeButton({ memberId, memberName }: { memberId: string; memberName: string }) {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    const { error } = await supabase.from("contributions").insert({
-      user_id: user.id,
-      member_id: memberId,
-      amount: Number(amount),
-      note: note || null,
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Contribution recorded");
-    setAmount("");
-    setNote("");
-    setOpen(false);
-    qc.invalidateQueries({ queryKey: ["members"] });
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Coins className="h-4 w-4" /> Contribute
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Record contribution — {memberName}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="a">Amount</Label>
-            <Input id="a" type="number" min="0" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="nt">Note (optional)</Label>
-            <Input id="nt" value={note} onChange={(e) => setNote(e.target.value)} />
-          </div>
-          <DialogFooter>
-            <Button type="submit" className="gap-2">
-              <Plus className="h-4 w-4" /> Record
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
