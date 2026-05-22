@@ -228,6 +228,8 @@ function PortalPage() {
         />
       </div>
 
+      <KycCard memberId={me.id} groupId={me.user_id} />
+
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} groupSavings={stats?.groupSavings ?? 0} />
         <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} mySavings={stats?.mySavings ?? 0} loanLimitMultiplier={portal?.loanLimitMultiplier ?? 3} />
