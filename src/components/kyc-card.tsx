@@ -65,7 +65,8 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
   const [idNumber, setIdNumber] = useState("");
   const [dob, setDob] = useState("");
   const [address, setAddress] = useState("");
-  const [idDoc, setIdDoc] = useState<File | null>(null);
+  const [idFront, setIdFront] = useState<File | null>(null);
+  const [idBack, setIdBack] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
