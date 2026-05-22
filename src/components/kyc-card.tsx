@@ -206,7 +206,20 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="in">ID number *</Label>
-                  <Input id="in" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} placeholder="000000/00/1" maxLength={10} required />
+                  <Input
+                    id="in"
+                    value={idNumber}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "").slice(0, 9);
+                      let formatted = raw;
+                      if (raw.length > 6) formatted = raw.slice(0, 6) + "/" + raw.slice(6);
+                      if (raw.length > 8) formatted = raw.slice(0, 6) + "/" + raw.slice(6, 8) + "/" + raw.slice(8);
+                      setIdNumber(formatted);
+                    }}
+                    placeholder="000000/00/1"
+                    maxLength={11}
+                    required
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
