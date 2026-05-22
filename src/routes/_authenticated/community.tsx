@@ -276,7 +276,15 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const c = content.trim();
-    if (!c && files.length === 0) return toast.error("Write something or add a file");
+    const cleanOptions = category === "poll"
+      ? pollOptions.map((o) => o.trim()).filter((o) => o.length > 0).slice(0, 8)
+      : [];
+    if (category === "poll") {
+      if (!c) return toast.error("Add a poll question");
+      if (cleanOptions.length < 2) return toast.error("Add at least 2 options");
+    } else {
+      if (!c && files.length === 0) return toast.error("Write something or add a file");
+    }
     if (c.length > 5000) return toast.error("Keep it under 5000 characters");
     setSubmitting(true);
 
@@ -293,6 +301,19 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
       .single();
 
     if (error || !post) { setSubmitting(false); return toast.error(error?.message ?? "Failed"); }
+
+    if (category === "poll" && cleanOptions.length >= 2) {
+      const rows = cleanOptions.map((text, i) => ({
+        post_id: post.id,
+        user_id: groupId,
+        member_id: memberId,
+        text: text.slice(0, 200),
+        sort_order: i,
+      }));
+      const { error: optErr } = await supabase.from("post_poll_options" as any).insert(rows as any);
+      if (optErr) toast.error(`Poll options: ${optErr.message}`);
+    }
+
 
     if (files.length > 0) {
       const uploads = await Promise.all(files.map(async (f) => {
