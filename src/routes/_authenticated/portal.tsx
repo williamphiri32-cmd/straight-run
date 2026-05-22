@@ -386,9 +386,15 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       setInsufficientOpen(true);
       return;
     }
+    const purposeMap: Record<string, string> = {
+      school_fees: "School fees",
+      medical_emergency: "Medical emergency",
+      funeral: "Funeral",
+      business_boost: "Business boost",
+    };
     const finalPurpose = purposeCategory === "other"
       ? (customPurpose.trim() || "Other")
-      : purposeCategory || null;
+      : (purposeMap[purposeCategory] || null);
     const { error } = await supabase.from("loan_applications").insert({
       user_id: groupId,
       member_id: memberId,
