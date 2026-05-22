@@ -371,8 +371,24 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!amount.trim()) {
+      toast.error("Amount is required");
+      return;
+    }
     const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (!term.trim()) {
+      toast.error("Term is required");
+      return;
+    }
     const termNum = Number(term);
+    if (!Number.isFinite(termNum) || termNum <= 0) {
+      toast.error("Enter a valid term");
+      return;
+    }
     if (termNum > maxTenure) {
       toast.error(`Max loan tenure for you is ${maxTenure} months`);
       return;
@@ -386,6 +402,14 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       setInsufficientOpen(true);
       return;
     }
+    if (!purposeCategory) {
+      toast.error("Please select a purpose");
+      return;
+    }
+    if (purposeCategory === "other" && !customPurpose.trim()) {
+      toast.error("Please specify the purpose");
+      return;
+    }
     const purposeMap: Record<string, string> = {
       school_fees: "School fees",
       medical_emergency: "Medical emergency",
@@ -393,8 +417,9 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       business_boost: "Business boost",
     };
     const finalPurpose = purposeCategory === "other"
-      ? (customPurpose.trim() || "Other")
-      : (purposeMap[purposeCategory] || null);
+      ? customPurpose.trim()
+      : purposeMap[purposeCategory];
+
     const { error } = await supabase.from("loan_applications").insert({
       user_id: groupId,
       member_id: memberId,
@@ -475,6 +500,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
               </Select>
               {purposeCategory === "other" && (
                 <Textarea
+                  required
                   value={customPurpose}
                   onChange={(e) => setCustomPurpose(e.target.value)}
                   placeholder="Please specify the purpose"
