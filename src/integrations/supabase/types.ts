@@ -234,6 +234,63 @@ export type Database = {
           },
         ]
       }
+      member_kyc: {
+        Row: {
+          address: string | null
+          created_at: string
+          date_of_birth: string | null
+          full_legal_name: string | null
+          id: string
+          id_document_path: string | null
+          id_number: string | null
+          id_type: string | null
+          member_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          selfie_path: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_legal_name?: string | null
+          id?: string
+          id_document_path?: string | null
+          id_number?: string | null
+          id_type?: string | null
+          member_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          selfie_path?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_legal_name?: string | null
+          id?: string
+          id_document_path?: string | null
+          id_number?: string | null
+          id_type?: string | null
+          member_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          selfie_path?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       member_loan_limits: {
         Row: {
           created_at: string
