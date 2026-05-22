@@ -22,6 +22,7 @@ import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lu
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
 import { computeLoanStats } from "@/lib/penalty";
+import { KycCard } from "@/components/kyc-card";
 
 
 export const Route = createFileRoute("/_authenticated/portal")({
