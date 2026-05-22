@@ -360,16 +360,11 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("3");
   const [purpose, setPurpose] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(amount);
     const termNum = Number(term);
-    if (!paymentMethod) {
-      toast.error("Select a payment method");
-      return;
-    }
     if (termNum > maxTenure) {
       toast.error(`Max loan tenure for you is ${maxTenure} months`);
       return;
@@ -389,7 +384,6 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       amount: amt,
       term_months: Number(term),
       purpose: purpose || null,
-      payment_method: paymentMethod,
       status: "pending",
     });
     if (error) return toast.error(error.message);
@@ -398,7 +392,6 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
     setAmount("");
     setTerm("3");
     setPurpose("");
-    setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["portal"] });
     qc.invalidateQueries({ queryKey: ["applications"] });
   };
@@ -447,10 +440,6 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
                 <Input id="t" type="number" min="1" max={maxTenure} required value={term} onChange={(e) => setTerm(e.target.value)} />
                 <p className="text-[11px] text-muted-foreground">Max tenure: {maxTenure} months</p>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Payment method</Label>
-              <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="p">Purpose</Label>
