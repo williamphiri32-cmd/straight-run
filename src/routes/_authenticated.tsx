@@ -30,6 +30,7 @@ function AuthLayout() {
   const nav = [
     { to: "/portal", label: "My Portal", icon: User },
     { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { to: "/community", label: "Community", icon: MessageSquare },
     { to: "/members", label: "Members", icon: Users },
     { to: "/loans", label: "Loans", icon: Banknote },
     ...(isTreasurer
