@@ -105,7 +105,12 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
     try {
       let id_document_path = kyc?.id_document_path ?? null;
       let selfie_path = kyc?.selfie_path ?? null;
-      if (idDoc) id_document_path = await upload(idDoc, "id");
+      if (idFront || idBack) {
+        const existing = (() => { try { return JSON.parse(id_document_path ?? ""); } catch { return id_document_path ? { front: id_document_path } : {}; } })() as { front?: string; back?: string };
+        if (idFront) existing.front = await upload(idFront, "id-front");
+        if (idBack) existing.back = await upload(idBack, "id-back");
+        id_document_path = JSON.stringify(existing);
+      }
       if (selfie) selfie_path = await upload(selfie, "selfie");
 
       const payload = {
