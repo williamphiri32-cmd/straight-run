@@ -446,12 +446,15 @@ function PostCard({
   const meta = catMeta(post.category);
   const qc = useQueryClient();
   const [reply, setReply] = useState("");
-  const [showAll, setShowAll] = useState(false);
-  const visibleComments = showAll ? comments : comments.slice(-3);
+  const [showComments, setShowComments] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const isAuthor = post.member_id === currentMemberId;
   const initials = memberName(post.member_id).slice(0, 1).toUpperCase();
   const myLike = likes.find((l) => l.member_id === currentMemberId);
   const [liking, setLiking] = useState(false);
+
+  const topLevel = comments.filter((c) => !c.parent_id);
+  const childrenOf = (id: string) => comments.filter((c) => c.parent_id === id);
 
   const toggleLike = async () => {
     if (liking) return;
@@ -475,16 +478,20 @@ function PostCard({
     if (!c) return;
     if (c.length > 2000) return toast.error("Keep replies under 2000 characters");
     const { error } = await supabase.from("post_comments").insert({
-      post_id: post.id, user_id: groupId, member_id: currentMemberId, content: c,
-    });
+      post_id: post.id,
+      user_id: groupId,
+      member_id: currentMemberId,
+      content: c,
+      parent_id: replyTo?.id ?? null,
+    } as any);
     if (error) return toast.error(error.message);
     setReply("");
+    setReplyTo(null);
     qc.invalidateQueries({ queryKey: ["community", groupId] });
   };
 
   const deletePost = async () => {
     if (!confirm("Delete this post and all its replies?")) return;
-    // best-effort delete of stored files
     if (attachments.length > 0) {
       await supabase.storage.from("community").remove(attachments.map((a) => a.storage_path));
     }
@@ -498,6 +505,50 @@ function PostCard({
     const { error } = await supabase.from("post_comments").delete().eq("id", id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["community", groupId] });
+  };
+
+  const renderComment = (c: any, depth = 0): React.ReactNode => {
+    const isMine = c.member_id === currentMemberId;
+    const kids = childrenOf(c.id);
+    return (
+      <li key={c.id} className="flex items-start gap-2.5">
+        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-background text-[11px] font-medium">
+          {memberName(c.member_id).slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="rounded-2xl rounded-tl-sm bg-background px-3 py-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-xs font-medium">{memberName(c.member_id)}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">{timeAgo(c.created_at)}</span>
+                {(isMine || canModerate) && (
+                  <button onClick={() => deleteComment(c.id)} className="text-muted-foreground hover:text-destructive" aria-label="Delete reply">
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="mt-0.5 whitespace-pre-wrap text-sm">{c.content}</p>
+          </div>
+          <button
+            onClick={() => setReplyTo({ id: c.id, name: memberName(c.member_id) })}
+            className="mt-1 ml-3 text-[11px] text-muted-foreground hover:text-primary"
+          >
+            Reply
+          </button>
+          {kids.length > 0 && depth < 4 && (
+            <ul className="mt-2 space-y-3 border-l-2 border-muted pl-3">
+              {kids.map((k) => renderComment(k, depth + 1))}
+            </ul>
+          )}
+          {kids.length > 0 && depth >= 4 && (
+            <ul className="mt-2 space-y-3 pl-3">
+              {kids.map((k) => renderComment(k, depth + 1))}
+            </ul>
+          )}
+        </div>
+      </li>
+    );
   };
 
   return (
@@ -547,61 +598,50 @@ function PostCard({
             <Heart className={`h-4 w-4 ${myLike ? "fill-current" : ""}`} />
             {likes.length > 0 && <span className="text-xs">{likes.length}</span>}
           </button>
-          <span className="inline-flex items-center gap-1.5">
+          <button
+            onClick={() => setShowComments((v) => !v)}
+            className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+            aria-expanded={showComments}
+          >
             <MessageSquare className="h-4 w-4" />
-            {comments.length}
-          </span>
+            {comments.length} {comments.length === 1 ? "reply" : "replies"}
+            <span className="text-[10px]">{showComments ? "▴" : "▾"}</span>
+          </button>
         </div>
       </div>
 
-      <div className="border-t bg-muted/30 px-5 py-4">
-        {comments.length > 3 && !showAll && (
-          <button onClick={() => setShowAll(true)} className="mb-3 text-xs text-primary hover:underline">
-            View all {comments.length} replies
-          </button>
-        )}
-        {visibleComments.length > 0 && (
-          <ul className="space-y-3">
-            {visibleComments.map((c: any) => {
-              const isMine = c.member_id === currentMemberId;
-              return (
-                <li key={c.id} className="flex items-start gap-2.5">
-                  <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-background text-[11px] font-medium">
-                    {memberName(c.member_id).slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-background px-3 py-2">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-xs font-medium">{memberName(c.member_id)}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground">{timeAgo(c.created_at)}</span>
-                        {(isMine || canModerate) && (
-                          <button onClick={() => deleteComment(c.id)} className="text-muted-foreground hover:text-destructive" aria-label="Delete reply">
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm">{c.content}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+      {showComments && (
+        <div className="border-t bg-muted/30 px-5 py-4">
+          {topLevel.length > 0 && (
+            <ul className="space-y-3">
+              {topLevel.map((c) => renderComment(c))}
+            </ul>
+          )}
 
-        <form onSubmit={sendReply} className="mt-3 flex items-center gap-2">
-          <Input
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            placeholder="Write a reply…"
-            maxLength={2000}
-            className="bg-background"
-          />
-          <Button type="submit" size="icon" disabled={!reply.trim()}>
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
-      </div>
+          <form onSubmit={sendReply} className="mt-3 space-y-2">
+            {replyTo && (
+              <div className="flex items-center justify-between rounded-md bg-background px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                <span>Replying to <span className="font-medium text-foreground">{replyTo.name}</span></span>
+                <button type="button" onClick={() => setReplyTo(null)} aria-label="Cancel reply">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Input
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                placeholder={replyTo ? `Reply to ${replyTo.name}…` : "Write a reply…"}
+                maxLength={2000}
+                className="bg-background"
+              />
+              <Button type="submit" size="icon" disabled={!reply.trim()}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </Card>
   );
 }
