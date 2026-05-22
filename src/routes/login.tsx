@@ -56,13 +56,21 @@ function LoginPage() {
   };
 
   const google = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: window.location.origin + "/dashboard",
+        skipBrowserRedirect: true,
       },
     });
-    if (error) toast.error(error.message ?? "Google sign-in failed");
+    if (error) {
+      toast.error(error.message ?? "Google sign-in failed");
+      return;
+    }
+    if (data?.url) {
+      // Open in a new tab so it works even when the app is inside an iframe
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    }
   };
 
   return (
