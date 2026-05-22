@@ -30,6 +30,8 @@ import {
   X,
   FileIcon,
   Play,
+  Vote,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,13 +40,14 @@ export const Route = createFileRoute("/_authenticated/community")({
   component: CommunityPage,
 });
 
-type Category = "idea" | "journal" | "question" | "announcement";
+type Category = "idea" | "journal" | "question" | "announcement" | "poll";
 
 const CATEGORIES: { value: Category; label: string; icon: typeof Lightbulb; tone: string }[] = [
   { value: "idea", label: "Business Idea", icon: Lightbulb, tone: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
   { value: "journal", label: "Journal", icon: BookOpen, tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
   { value: "question", label: "Question", icon: HelpCircle, tone: "bg-sky-500/15 text-sky-700 dark:text-sky-400" },
   { value: "announcement", label: "Announcement", icon: Megaphone, tone: "bg-rose-500/15 text-rose-700 dark:text-rose-400" },
+  { value: "poll", label: "Poll", icon: Vote, tone: "bg-violet-500/15 text-violet-700 dark:text-violet-400" },
 ];
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
@@ -84,12 +87,14 @@ function CommunityPage() {
     queryKey: ["community", groupId],
     enabled: !!groupId,
     queryFn: async () => {
-      const [postsRes, commentsRes, membersRes, likesRes, attRes] = await Promise.all([
+      const [postsRes, commentsRes, membersRes, likesRes, attRes, pollOptRes, pollVoteRes] = await Promise.all([
         supabase.from("posts").select("*").eq("user_id", groupId!).order("created_at", { ascending: false }),
         supabase.from("post_comments").select("*").eq("user_id", groupId!).order("created_at", { ascending: true }),
         supabase.from("members").select("id, name").eq("user_id", groupId!),
         supabase.from("post_likes" as any).select("*").eq("user_id", groupId!),
         supabase.from("post_attachments" as any).select("*").eq("user_id", groupId!).order("created_at", { ascending: true }),
+        supabase.from("post_poll_options" as any).select("*").eq("user_id", groupId!).order("sort_order", { ascending: true }),
+        supabase.from("post_poll_votes" as any).select("*").eq("user_id", groupId!),
       ]);
       return {
         posts: postsRes.data ?? [],
@@ -97,6 +102,8 @@ function CommunityPage() {
         members: membersRes.data ?? [],
         likes: (likesRes.data as any[]) ?? [],
         attachments: (attRes.data as any[]) ?? [],
+        pollOptions: (pollOptRes.data as any[]) ?? [],
+        pollVotes: (pollVoteRes.data as any[]) ?? [],
       };
     },
   });
@@ -112,6 +119,10 @@ function CommunityPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "post_likes", filter: `user_id=eq.${groupId}` },
         () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "post_attachments", filter: `user_id=eq.${groupId}` },
+        () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "post_poll_options", filter: `user_id=eq.${groupId}` },
+        () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "post_poll_votes", filter: `user_id=eq.${groupId}` },
         () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -178,6 +189,8 @@ function CommunityPage() {
               comments={(data?.comments ?? []).filter((c: any) => c.post_id === p.id)}
               likes={(data?.likes ?? []).filter((l: any) => l.post_id === p.id)}
               attachments={(data?.attachments ?? []).filter((a: any) => a.post_id === p.id)}
+              pollOptions={(data?.pollOptions ?? []).filter((o: any) => o.post_id === p.id)}
+              pollVotes={(data?.pollVotes ?? []).filter((v: any) => v.post_id === p.id)}
               memberName={memberName}
               currentMemberId={me.id}
               groupId={me.user_id}
@@ -244,6 +257,7 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -262,7 +276,15 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const c = content.trim();
-    if (!c && files.length === 0) return toast.error("Write something or add a file");
+    const cleanOptions = category === "poll"
+      ? pollOptions.map((o) => o.trim()).filter((o) => o.length > 0).slice(0, 8)
+      : [];
+    if (category === "poll") {
+      if (!c) return toast.error("Add a poll question");
+      if (cleanOptions.length < 2) return toast.error("Add at least 2 options");
+    } else {
+      if (!c && files.length === 0) return toast.error("Write something or add a file");
+    }
     if (c.length > 5000) return toast.error("Keep it under 5000 characters");
     setSubmitting(true);
 
@@ -279,6 +301,19 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
       .single();
 
     if (error || !post) { setSubmitting(false); return toast.error(error?.message ?? "Failed"); }
+
+    if (category === "poll" && cleanOptions.length >= 2) {
+      const rows = cleanOptions.map((text, i) => ({
+        post_id: post.id,
+        user_id: groupId,
+        member_id: memberId,
+        text: text.slice(0, 200),
+        sort_order: i,
+      }));
+      const { error: optErr } = await supabase.from("post_poll_options" as any).insert(rows as any);
+      if (optErr) toast.error(`Poll options: ${optErr.message}`);
+    }
+
 
     if (files.length > 0) {
       const uploads = await Promise.all(files.map(async (f) => {
@@ -311,7 +346,7 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
 
     setSubmitting(false);
     toast.success("Posted");
-    setTitle(""); setContent(""); setCategory("idea"); setFiles([]); setOpen(false);
+    setTitle(""); setContent(""); setCategory("idea"); setFiles([]); setPollOptions(["", ""]); setOpen(false);
     qc.invalidateQueries({ queryKey: ["community", groupId] });
   };
 
@@ -354,19 +389,62 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="c">Your message</Label>
+          <Label htmlFor="c">{category === "poll" ? "Poll question" : "Your message"}</Label>
           <Textarea
             id="c"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            rows={5}
+            rows={category === "poll" ? 2 : 5}
             maxLength={5000}
-            placeholder="Share an idea, your weekly journal, or a question for the group…"
+            placeholder={category === "poll"
+              ? "What should the group decide on?"
+              : "Share an idea, your weekly journal, or a question for the group…"}
           />
           <p className="text-[11px] text-muted-foreground">{content.length}/5000</p>
         </div>
 
-        <AttachmentPreview files={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
+        {category === "poll" && (
+          <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+            <Label className="text-xs">Options ({pollOptions.length}/8)</Label>
+            {pollOptions.map((opt, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={opt}
+                  maxLength={200}
+                  onChange={(e) => setPollOptions(pollOptions.map((o, idx) => (idx === i ? e.target.value : o)))}
+                  placeholder={`Option ${i + 1}`}
+                  className="bg-background"
+                />
+                {pollOptions.length > 2 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))}
+                    aria-label="Remove option"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {pollOptions.length < 8 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPollOptions([...pollOptions, ""])}
+                className="gap-2"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add option
+              </Button>
+            )}
+          </div>
+        )}
+
+        {category !== "poll" && (
+          <AttachmentPreview files={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
+        )}
 
         <input
           ref={fileRef}
@@ -378,9 +456,11 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
         />
 
         <div className="flex flex-wrap justify-between gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="gap-2">
-            <Paperclip className="h-4 w-4" /> Attach
-          </Button>
+          {category !== "poll" ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="gap-2">
+              <Paperclip className="h-4 w-4" /> Attach
+            </Button>
+          ) : <span />}
           <div className="flex gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={submitting} className="gap-2">
@@ -432,12 +512,14 @@ function AttachmentGrid({ attachments }: { attachments: any[] }) {
 }
 
 function PostCard({
-  post, comments, likes, attachments, memberName, currentMemberId, groupId, canModerate,
+  post, comments, likes, attachments, pollOptions, pollVotes, memberName, currentMemberId, groupId, canModerate,
 }: {
   post: any;
   comments: any[];
   likes: any[];
   attachments: any[];
+  pollOptions: any[];
+  pollVotes: any[];
   memberName: (id: string) => string;
   currentMemberId: string;
   groupId: string;
@@ -586,6 +668,16 @@ function PostCard({
           <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{post.content}</p>
         )}
 
+        {post.category === "poll" && (
+          <PollSection
+            options={pollOptions}
+            votes={pollVotes}
+            postId={post.id}
+            groupId={groupId}
+            currentMemberId={currentMemberId}
+          />
+        )}
+
         <AttachmentGrid attachments={attachments} />
 
         <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
@@ -643,5 +735,90 @@ function PostCard({
         </div>
       )}
     </Card>
+  );
+}
+
+function PollSection({
+  options, votes, postId, groupId, currentMemberId,
+}: {
+  options: any[];
+  votes: any[];
+  postId: string;
+  groupId: string;
+  currentMemberId: string;
+}) {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const myVote = votes.find((v) => v.member_id === currentMemberId);
+  const total = votes.length;
+
+  const vote = async (optionId: string) => {
+    if (busy) return;
+    setBusy(true);
+    if (myVote) {
+      if (myVote.option_id === optionId) {
+        const { error } = await supabase.from("post_poll_votes" as any).delete().eq("id", myVote.id);
+        if (error) toast.error(error.message);
+      } else {
+        const { error } = await supabase
+          .from("post_poll_votes" as any)
+          .update({ option_id: optionId } as any)
+          .eq("id", myVote.id);
+        if (error) toast.error(error.message);
+      }
+    } else {
+      const { error } = await supabase.from("post_poll_votes" as any).insert({
+        post_id: postId,
+        option_id: optionId,
+        user_id: groupId,
+        member_id: currentMemberId,
+      } as any);
+      if (error) toast.error(error.message);
+    }
+    setBusy(false);
+    qc.invalidateQueries({ queryKey: ["community", groupId] });
+  };
+
+  if (options.length === 0) {
+    return <p className="mt-3 text-xs text-muted-foreground italic">No options yet.</p>;
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      {options.map((o) => {
+        const count = votes.filter((v) => v.option_id === o.id).length;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        const mine = myVote?.option_id === o.id;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            disabled={busy}
+            onClick={() => vote(o.id)}
+            className={`group relative w-full overflow-hidden rounded-md border px-3 py-2 text-left text-sm transition-colors ${
+              mine ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+            }`}
+          >
+            <div
+              className={`absolute inset-y-0 left-0 transition-all ${mine ? "bg-primary/15" : "bg-muted"}`}
+              style={{ width: `${pct}%` }}
+              aria-hidden
+            />
+            <div className="relative flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-2 font-medium">
+                {mine && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                {o.text}
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {count} · {pct}%
+              </span>
+            </div>
+          </button>
+        );
+      })}
+      <p className="text-[11px] text-muted-foreground">
+        {total} {total === 1 ? "vote" : "votes"}{myVote ? " · tap your choice again to remove" : ""}
+      </p>
+    </div>
   );
 }

@@ -503,6 +503,63 @@ export type Database = {
         }
         Relationships: []
       }
+      post_poll_options: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          post_id: string
+          sort_order: number
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          post_id: string
+          sort_order?: number
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          post_id?: string
+          sort_order?: number
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      post_poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          option_id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          option_id: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          option_id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           category: string
