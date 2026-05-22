@@ -365,10 +365,6 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
     e.preventDefault();
     const amt = Number(amount);
     const termNum = Number(term);
-    if (!paymentMethod) {
-      toast.error("Select a payment method");
-      return;
-    }
     if (termNum > maxTenure) {
       toast.error(`Max loan tenure for you is ${maxTenure} months`);
       return;
