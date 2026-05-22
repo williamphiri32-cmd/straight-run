@@ -22,7 +22,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Banknote, Plus, ArrowDownToLine } from "lucide-react";
+import { Banknote, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
 import { PaymentMethodSelect, PaymentMethodIcon, type PaymentMethod } from "@/components/payment-method-select";
@@ -347,7 +347,6 @@ function LoansPage() {
                       <p className="text-xs text-muted-foreground">Outstanding (incl. interest)</p>
                       <p className="font-display tabular-nums text-primary">{money(owed)}</p>
                     </div>
-                    {!fullyPaid && <RepayButton loanId={l.id} owed={owed} />}
                   </div>
                 </div>
               </Card>
@@ -359,71 +358,3 @@ function LoansPage() {
   );
 }
 
-function RepayButton({ loanId, owed }: { loanId: string; owed: number }) {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    const amt = Number(amount);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      return toast.error("Enter a valid amount");
-    }
-    if (!paymentMethod) {
-      return toast.error("Select a payment method");
-    }
-    if (amt > owed + 0.005) {
-      return toast.error(`Amount exceeds outstanding balance (${money(owed)})`);
-    }
-    const { error } = await supabase.from("repayments").insert({
-      user_id: user.id,
-      loan_id: loanId,
-      amount: amt,
-      payment_method: paymentMethod,
-    });
-    if (error) return toast.error(error.message);
-    if (amt >= owed - 0.005) {
-      await supabase.from("loans").update({ status: "paid" }).eq("id", loanId);
-    }
-    toast.success("Repayment recorded");
-    setAmount("");
-    setPaymentMethod("");
-    setOpen(false);
-    qc.invalidateQueries({ queryKey: ["loans"] });
-    qc.invalidateQueries({ queryKey: ["group-balance"] });
-    qc.invalidateQueries({ queryKey: ["dashboard"] });
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-2">
-          <ArrowDownToLine className="h-4 w-4" /> Repay
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Record repayment</DialogTitle></DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="ra">Amount (owed: {money(owed)})</Label>
-            <Input id="ra" type="number" min="0" max={owed.toFixed(2)} step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
-            <p className="text-[11px] text-muted-foreground">Maximum: {money(owed)}</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Payment method</Label>
-            <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
-          </div>
-          <DialogFooter>
-            <Button type="submit" className="gap-2">
-              <Plus className="h-4 w-4" /> Record
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
