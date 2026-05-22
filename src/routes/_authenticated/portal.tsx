@@ -360,7 +360,6 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("3");
   const [purpose, setPurpose] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
