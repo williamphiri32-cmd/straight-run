@@ -120,6 +120,10 @@ function CommunityPage() {
         () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "post_attachments", filter: `user_id=eq.${groupId}` },
         () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "post_poll_options", filter: `user_id=eq.${groupId}` },
+        () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "post_poll_votes", filter: `user_id=eq.${groupId}` },
+        () => qc.invalidateQueries({ queryKey: ["community", groupId] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [groupId, qc]);
