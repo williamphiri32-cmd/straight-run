@@ -668,6 +668,16 @@ function PostCard({
           <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{post.content}</p>
         )}
 
+        {post.category === "poll" && (
+          <PollSection
+            options={pollOptions}
+            votes={pollVotes}
+            postId={post.id}
+            groupId={groupId}
+            currentMemberId={currentMemberId}
+          />
+        )}
+
         <AttachmentGrid attachments={attachments} />
 
         <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
