@@ -189,6 +189,8 @@ function CommunityPage() {
               comments={(data?.comments ?? []).filter((c: any) => c.post_id === p.id)}
               likes={(data?.likes ?? []).filter((l: any) => l.post_id === p.id)}
               attachments={(data?.attachments ?? []).filter((a: any) => a.post_id === p.id)}
+              pollOptions={(data?.pollOptions ?? []).filter((o: any) => o.post_id === p.id)}
+              pollVotes={(data?.pollVotes ?? []).filter((v: any) => v.post_id === p.id)}
               memberName={memberName}
               currentMemberId={me.id}
               groupId={me.user_id}
