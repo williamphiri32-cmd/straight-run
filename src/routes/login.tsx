@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Sprout } from "lucide-react";
-import { toast } from "sonner";
+import { Sprout, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/login")({
@@ -22,6 +21,8 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (session) navigate({ to: "/dashboard" });
@@ -29,6 +30,8 @@ function LoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -41,21 +44,21 @@ function LoginPage() {
           },
         });
         if (error) throw error;
-        toast.success("Account created. Check your email to confirm.");
+        setSuccess("Account created! Check your email to confirm before signing in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
-        toast.success("Welcome back");
         navigate({ to: "/dashboard" });
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   const google = async () => {
+    setError(null);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -64,11 +67,10 @@ function LoginPage() {
       },
     });
     if (error) {
-      toast.error(error.message ?? "Google sign-in failed");
+      setError(error.message ?? "Google sign-in failed");
       return;
     }
     if (data?.url) {
-      // Open in a new tab so it works even when the app is inside an iframe
       window.open(data.url, "_blank", "noopener,noreferrer");
     }
   };
@@ -101,6 +103,20 @@ function LoginPage() {
             or
             <div className="h-px flex-1 bg-border" />
           </div>
+
+          {error && (
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-green-600/30 bg-green-50 px-3 py-2 text-sm text-green-700">
+              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              {success}
+            </div>
+          )}
 
           <form onSubmit={submit} className="space-y-4">
             {mode === "signup" && (
@@ -146,7 +162,7 @@ function LoginPage() {
             {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
             <button
               className="font-medium text-primary hover:underline"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setSuccess(null); }}
             >
               {mode === "signin" ? "Create an account" : "Sign in"}
             </button>
