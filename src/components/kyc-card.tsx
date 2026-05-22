@@ -94,6 +94,11 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
       toast.error("Please fill in all required fields");
       return;
     }
+    const idRegex = /^\d{6}\/\d{2}\/\d{1}$/;
+    if (!idRegex.test(idNumber.trim())) {
+      toast.error("ID number must be in format 000000/00/0");
+      return;
+    }
     setSaving(true);
     try {
       let id_document_path = kyc?.id_document_path ?? null;
@@ -201,7 +206,7 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="in">ID number *</Label>
-                  <Input id="in" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} maxLength={60} required />
+                  <Input id="in" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} placeholder="000000/00/1" maxLength={10} required />
                 </div>
               </div>
               <div className="space-y-1.5">
