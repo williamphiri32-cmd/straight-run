@@ -22,6 +22,7 @@ import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lu
 import { toast } from "sonner";
 import { money, fmtDate } from "@/lib/format";
 import { computeLoanStats } from "@/lib/penalty";
+import { KycCard } from "@/components/kyc-card";
 
 
 export const Route = createFileRoute("/_authenticated/portal")({
@@ -226,6 +227,8 @@ function PortalPage() {
           }
         />
       </div>
+
+      <KycCard memberId={me.id} groupId={me.user_id} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} groupSavings={stats?.groupSavings ?? 0} />
