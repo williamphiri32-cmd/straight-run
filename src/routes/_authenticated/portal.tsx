@@ -187,6 +187,8 @@ function PortalPage() {
         </p>
       </header>
 
+      <KycCard memberId={me.id} groupId={me.user_id} />
+
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
@@ -227,8 +229,6 @@ function PortalPage() {
           }
         />
       </div>
-
-      <KycCard memberId={me.id} groupId={me.user_id} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} groupSavings={stats?.groupSavings ?? 0} />
