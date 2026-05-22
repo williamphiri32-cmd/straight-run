@@ -512,12 +512,14 @@ function AttachmentGrid({ attachments }: { attachments: any[] }) {
 }
 
 function PostCard({
-  post, comments, likes, attachments, memberName, currentMemberId, groupId, canModerate,
+  post, comments, likes, attachments, pollOptions, pollVotes, memberName, currentMemberId, groupId, canModerate,
 }: {
   post: any;
   comments: any[];
   likes: any[];
   attachments: any[];
+  pollOptions: any[];
+  pollVotes: any[];
   memberName: (id: string) => string;
   currentMemberId: string;
   groupId: string;
