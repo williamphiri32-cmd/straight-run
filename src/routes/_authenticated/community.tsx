@@ -87,12 +87,14 @@ function CommunityPage() {
     queryKey: ["community", groupId],
     enabled: !!groupId,
     queryFn: async () => {
-      const [postsRes, commentsRes, membersRes, likesRes, attRes] = await Promise.all([
+      const [postsRes, commentsRes, membersRes, likesRes, attRes, pollOptRes, pollVoteRes] = await Promise.all([
         supabase.from("posts").select("*").eq("user_id", groupId!).order("created_at", { ascending: false }),
         supabase.from("post_comments").select("*").eq("user_id", groupId!).order("created_at", { ascending: true }),
         supabase.from("members").select("id, name").eq("user_id", groupId!),
         supabase.from("post_likes" as any).select("*").eq("user_id", groupId!),
         supabase.from("post_attachments" as any).select("*").eq("user_id", groupId!).order("created_at", { ascending: true }),
+        supabase.from("post_poll_options" as any).select("*").eq("user_id", groupId!).order("sort_order", { ascending: true }),
+        supabase.from("post_poll_votes" as any).select("*").eq("user_id", groupId!),
       ]);
       return {
         posts: postsRes.data ?? [],
@@ -100,6 +102,8 @@ function CommunityPage() {
         members: membersRes.data ?? [],
         likes: (likesRes.data as any[]) ?? [],
         attachments: (attRes.data as any[]) ?? [],
+        pollOptions: (pollOptRes.data as any[]) ?? [],
+        pollVotes: (pollVoteRes.data as any[]) ?? [],
       };
     },
   });
