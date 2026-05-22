@@ -338,6 +338,45 @@ export type Database = {
         }
         Relationships: []
       }
+      post_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          kind: string
+          member_id: string
+          mime_type: string
+          post_id: string
+          size_bytes: number
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          kind?: string
+          member_id: string
+          mime_type: string
+          post_id: string
+          size_bytes?: number
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          kind?: string
+          member_id?: string
+          mime_type?: string
+          post_id?: string
+          size_bytes?: number
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
@@ -372,6 +411,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       posts: {
         Row: {
