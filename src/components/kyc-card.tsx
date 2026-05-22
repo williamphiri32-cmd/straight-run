@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ShieldCheck, ShieldAlert, ShieldQuestion, Upload } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldQuestionMark as ShieldQuestion, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 type KycRow = {
