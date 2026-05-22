@@ -257,6 +257,7 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
