@@ -209,6 +209,9 @@ function SettingsPage() {
 
       <OffencesCard userId={user?.id} />
 
+      <KycReviewCard userId={user?.id} />
+
+
       <MemberTenureOverrides
         userId={user?.id}
         members={members ?? []}
