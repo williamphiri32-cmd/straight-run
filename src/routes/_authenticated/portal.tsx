@@ -17,6 +17,13 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PaymentMethodSelect, type PaymentMethod } from "@/components/payment-method-select";
 import { HandCoins, TrendingUp, AlertTriangle, Gift, Clock, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
@@ -359,7 +366,8 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
   const [insufficientOpen, setInsufficientOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [term, setTerm] = useState("3");
-  const [purpose, setPurpose] = useState("");
+  const [purposeCategory, setPurposeCategory] = useState("");
+  const [customPurpose, setCustomPurpose] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,12 +386,21 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       setInsufficientOpen(true);
       return;
     }
+    const purposeMap: Record<string, string> = {
+      school_fees: "School fees",
+      medical_emergency: "Medical emergency",
+      funeral: "Funeral",
+      business_boost: "Business boost",
+    };
+    const finalPurpose = purposeCategory === "other"
+      ? (customPurpose.trim() || "Other")
+      : (purposeMap[purposeCategory] || null);
     const { error } = await supabase.from("loan_applications").insert({
       user_id: groupId,
       member_id: memberId,
       amount: amt,
       term_months: Number(term),
-      purpose: purpose || null,
+      purpose: finalPurpose,
       status: "pending",
     });
     if (error) return toast.error(error.message);
@@ -391,7 +408,8 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
     setOpen(false);
     setAmount("");
     setTerm("3");
-    setPurpose("");
+    setPurposeCategory("");
+    setCustomPurpose("");
     qc.invalidateQueries({ queryKey: ["portal"] });
     qc.invalidateQueries({ queryKey: ["applications"] });
   };
@@ -443,7 +461,26 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="p">Purpose</Label>
-              <Textarea id="p" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="What is this loan for?" />
+              <Select value={purposeCategory} onValueChange={setPurposeCategory}>
+                <SelectTrigger id="p">
+                  <SelectValue placeholder="Select purpose" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="school_fees">School fees</SelectItem>
+                  <SelectItem value="medical_emergency">Medical emergency</SelectItem>
+                  <SelectItem value="funeral">Funeral</SelectItem>
+                  <SelectItem value="business_boost">Business boost</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {purposeCategory === "other" && (
+                <Textarea
+                  value={customPurpose}
+                  onChange={(e) => setCustomPurpose(e.target.value)}
+                  placeholder="Please specify the purpose"
+                  className="mt-2"
+                />
+              )}
             </div>
             <DialogFooter>
               <Button type="submit">Submit application</Button>
