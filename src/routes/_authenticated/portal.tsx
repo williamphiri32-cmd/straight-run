@@ -384,7 +384,6 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
       amount: amt,
       term_months: Number(term),
       purpose: purpose || null,
-      payment_method: paymentMethod,
       status: "pending",
     });
     if (error) return toast.error(error.message);
