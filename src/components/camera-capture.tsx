@@ -14,7 +14,7 @@ export function CameraCapture({
   onCapture: (file: File | null) => void;
   facingMode?: "environment" | "user";
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [active, setActive] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -31,27 +31,54 @@ export function CameraCapture({
   const stop = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
     setActive(false);
   };
 
   useEffect(() => () => stop(), []);
 
+  // Attach the stream once the <video> element is mounted
+  const attachVideo = (el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (el && streamRef.current && el.srcObject !== streamRef.current) {
+      el.srcObject = streamRef.current;
+      el.play().catch((e) => console.warn("video.play() failed", e));
+    }
+  };
+
   const start = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Camera API not available in this browser");
+      return;
+    }
+    if (!window.isSecureContext) {
+      toast.error("Camera requires HTTPS");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode },
+        video: { facingMode: { ideal: facingMode } },
         audio: false,
       });
       streamRef.current = stream;
       setActive(true);
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
-        }
-      }, 0);
+      // If the <video> is already mounted (rare), wire it up now
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
     } catch (err: any) {
-      toast.error(err?.message ?? "Camera not available");
+      const name = err?.name ?? "";
+      const msg =
+        name === "NotAllowedError"
+          ? "Camera permission denied. Allow camera access and try again."
+          : name === "NotFoundError"
+            ? "No camera found on this device."
+            : name === "NotReadableError"
+              ? "Camera is in use by another app."
+              : err?.message ?? "Camera not available";
+      toast.error(msg);
+      console.error("getUserMedia failed", err);
     }
   };
 
@@ -82,7 +109,7 @@ export function CameraCapture({
     <div className="space-y-2">
       {active ? (
         <div className="space-y-2">
-          <video ref={videoRef} playsInline muted className="w-full rounded-md border bg-black aspect-video object-cover" />
+          <video ref={attachVideo} playsInline muted autoPlay className="w-full rounded-md border bg-black aspect-video object-cover" />
           <div className="flex gap-2">
             <Button type="button" size="sm" onClick={snap} className="gap-1.5"><Check className="h-4 w-4" />Capture</Button>
             <Button type="button" size="sm" variant="ghost" onClick={stop}>Cancel</Button>
