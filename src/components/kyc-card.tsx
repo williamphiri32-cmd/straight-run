@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ShieldCheck, ShieldAlert, ShieldQuestionMark as ShieldQuestion, Upload } from "lucide-react";
+import { CameraCapture } from "@/components/camera-capture";
 import { toast } from "sonner";
 
 type KycRow = {
