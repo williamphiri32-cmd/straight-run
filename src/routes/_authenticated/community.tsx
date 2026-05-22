@@ -389,19 +389,62 @@ function NewPostCard({ memberId, groupId, userId }: { memberId: string; groupId:
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="c">Your message</Label>
+          <Label htmlFor="c">{category === "poll" ? "Poll question" : "Your message"}</Label>
           <Textarea
             id="c"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            rows={5}
+            rows={category === "poll" ? 2 : 5}
             maxLength={5000}
-            placeholder="Share an idea, your weekly journal, or a question for the group…"
+            placeholder={category === "poll"
+              ? "What should the group decide on?"
+              : "Share an idea, your weekly journal, or a question for the group…"}
           />
           <p className="text-[11px] text-muted-foreground">{content.length}/5000</p>
         </div>
 
-        <AttachmentPreview files={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
+        {category === "poll" && (
+          <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+            <Label className="text-xs">Options ({pollOptions.length}/8)</Label>
+            {pollOptions.map((opt, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={opt}
+                  maxLength={200}
+                  onChange={(e) => setPollOptions(pollOptions.map((o, idx) => (idx === i ? e.target.value : o)))}
+                  placeholder={`Option ${i + 1}`}
+                  className="bg-background"
+                />
+                {pollOptions.length > 2 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))}
+                    aria-label="Remove option"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {pollOptions.length < 8 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPollOptions([...pollOptions, ""])}
+                className="gap-2"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add option
+              </Button>
+            )}
+          </div>
+        )}
+
+        {category !== "poll" && (
+          <AttachmentPreview files={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
+        )}
 
         <input
           ref={fileRef}
