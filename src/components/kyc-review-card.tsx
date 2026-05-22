@@ -75,12 +75,16 @@ export function KycReviewCard({ userId }: { userId?: string }) {
         reviewed_at: new Date().toISOString(),
       })
       .eq("id", row.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(status === "verified" ? "Member verified" : "Member rejected");
     setOpenId(null);
     qc.invalidateQueries({ queryKey: ["kyc-review", userId] });
     qc.invalidateQueries({ queryKey: ["member-kyc", row.member_id] });
   };
+
 
   return (
     <Card className="p-6">
