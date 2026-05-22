@@ -392,7 +392,6 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
     setAmount("");
     setTerm("3");
     setPurpose("");
-    setPaymentMethod("");
     qc.invalidateQueries({ queryKey: ["portal"] });
     qc.invalidateQueries({ queryKey: ["applications"] });
   };
