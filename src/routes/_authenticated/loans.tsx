@@ -69,7 +69,7 @@ function LoansPage() {
   });
 
   const { data: tiers } = useQuery({
-    queryKey: ["loan-tiers", user?.id],
+    queryKey: ["loan-tiers-summary", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
