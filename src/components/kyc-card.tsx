@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ShieldCheck, ShieldAlert, ShieldQuestionMark as ShieldQuestion, Upload } from "lucide-react";
+import { CameraCapture } from "@/components/camera-capture";
 import { toast } from "sonner";
 
 type KycRow = {
@@ -239,18 +240,18 @@ export function KycCard({ memberId, groupId }: { memberId: string; groupId: stri
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="idfront">ID front (camera)</Label>
-                  <Input id="idfront" type="file" accept="image/*" capture="environment" onChange={(e) => setIdFront(e.target.files?.[0] ?? null)} />
+                  <Label>ID front</Label>
+                  <CameraCapture label="id-front" value={idFront} onCapture={setIdFront} />
                   {kyc?.id_document_path && !idFront && <p className="text-[11px] text-muted-foreground">Front on record</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="idback">ID back (camera)</Label>
-                  <Input id="idback" type="file" accept="image/*" capture="environment" onChange={(e) => setIdBack(e.target.files?.[0] ?? null)} />
+                  <Label>ID back</Label>
+                  <CameraCapture label="id-back" value={idBack} onCapture={setIdBack} />
                   {kyc?.id_document_path && !idBack && <p className="text-[11px] text-muted-foreground">Back on record</p>}
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="self">Selfie</Label>
-                  <Input id="self" type="file" accept="image/*" onChange={(e) => setSelfie(e.target.files?.[0] ?? null)} />
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Selfie</Label>
+                  <CameraCapture label="selfie" value={selfie} onCapture={setSelfie} facingMode="user" />
                   {kyc?.selfie_path && !selfie && <p className="text-[11px] text-muted-foreground">Current photo on record</p>}
                 </div>
               </div>
