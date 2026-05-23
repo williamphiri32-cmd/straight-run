@@ -524,6 +524,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
           </form>
         </DialogContent>
       </Dialog>
+      )}
 
       <Dialog open={insufficientOpen} onOpenChange={setInsufficientOpen}>
         <DialogContent>
