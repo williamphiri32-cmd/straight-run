@@ -452,12 +452,18 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
           <strong className="text-foreground">{money(availableFunds)}</strong>
         </p>
       </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="gap-2">
-            <HandCoins className="h-4 w-4" /> Apply for loan
-          </Button>
-        </DialogTrigger>
+      {activeLoanCount > 0 ? (
+        <div className="flex items-center gap-2 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <span>You have an active loan — pay it off to apply again</span>
+        </div>
+      ) : (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <HandCoins className="h-4 w-4" /> Apply for loan
+            </Button>
+          </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New loan application</DialogTitle>
