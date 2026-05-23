@@ -371,6 +371,10 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (activeLoanCount > 0) {
+      toast.error("You already have an active loan. Pay it off before applying for a new one.");
+      return;
+    }
     if (!amount.trim()) {
       toast.error("Amount is required");
       return;
