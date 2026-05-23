@@ -239,7 +239,7 @@ function PortalPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <ContributeCard memberId={me.id} groupId={me.user_id} mySavings={stats?.mySavings ?? 0} groupSavings={stats?.groupSavings ?? 0} />
-        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} mySavings={stats?.mySavings ?? 0} loanLimitMultiplier={portal?.loanLimitMultiplier ?? 3} />
+        <ApplyForLoanCard memberId={me.id} groupId={me.user_id} availableFunds={stats?.availableFunds ?? 0} maxTenure={portal?.maxTenure ?? 12} mySavings={stats?.mySavings ?? 0} loanLimitMultiplier={portal?.loanLimitMultiplier ?? 3} activeLoanCount={stats?.loansWithStats.filter((x) => !x.stats.fullyPaid).length ?? 0} />
       </div>
 
       <Card className="p-5">
@@ -358,7 +358,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavings, loanLimitMultiplier }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number; mySavings: number; loanLimitMultiplier: number }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavings, loanLimitMultiplier, activeLoanCount }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number; mySavings: number; loanLimitMultiplier: number; activeLoanCount: number }) {
   const personalLimit = mySavings * loanLimitMultiplier;
   const effectiveMax = Math.max(0, Math.min(availableFunds, personalLimit));
   const qc = useQueryClient();
@@ -371,6 +371,10 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (activeLoanCount > 0) {
+      toast.error("You already have an active loan. Pay it off before applying for a new one.");
+      return;
+    }
     if (!amount.trim()) {
       toast.error("Amount is required");
       return;
@@ -448,12 +452,18 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
           <strong className="text-foreground">{money(availableFunds)}</strong>
         </p>
       </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="gap-2">
-            <HandCoins className="h-4 w-4" /> Apply for loan
-          </Button>
-        </DialogTrigger>
+      {activeLoanCount > 0 ? (
+        <div className="flex items-center gap-2 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <span>You have an active loan — pay it off to apply again</span>
+        </div>
+      ) : (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <HandCoins className="h-4 w-4" /> Apply for loan
+            </Button>
+          </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New loan application</DialogTitle>
@@ -514,6 +524,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
           </form>
         </DialogContent>
       </Dialog>
+      )}
 
       <Dialog open={insufficientOpen} onOpenChange={setInsufficientOpen}>
         <DialogContent>
