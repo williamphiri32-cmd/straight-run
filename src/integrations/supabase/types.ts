@@ -766,6 +766,19 @@ export type Database = {
     Functions: {
       my_group_ids: { Args: never; Returns: string[] }
       my_member_ids: { Args: never; Returns: string[] }
+      treasurer_list_members: {
+        Args: never
+        Returns: {
+          auth_user_id: string
+          created_at: string
+          email: string
+          id: string
+          joined_at: string
+          name: string
+          phone: string
+          total_contributions: number
+        }[]
+      }
     }
     Enums: {
       loan_application_status: "pending" | "approved" | "rejected"
