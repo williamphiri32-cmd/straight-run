@@ -358,7 +358,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavings, loanLimitMultiplier }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number; mySavings: number; loanLimitMultiplier: number }) {
+function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavings, loanLimitMultiplier, activeLoanCount }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number; mySavings: number; loanLimitMultiplier: number; activeLoanCount: number }) {
   const personalLimit = mySavings * loanLimitMultiplier;
   const effectiveMax = Math.max(0, Math.min(availableFunds, personalLimit));
   const qc = useQueryClient();
