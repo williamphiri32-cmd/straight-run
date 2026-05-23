@@ -358,9 +358,16 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavings, loanLimitMultiplier, activeLoanCount }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number; mySavings: number; loanLimitMultiplier: number; activeLoanCount: number }) {
+type ActiveLoan = {
+  loan: any;
+  stats: ReturnType<typeof computeLoanStats>;
+};
+
+function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavings, loanLimitMultiplier, activeLoans }: { memberId: string; groupId: string; availableFunds: number; maxTenure: number; mySavings: number; loanLimitMultiplier: number; activeLoans: ActiveLoan[] }) {
   const personalLimit = mySavings * loanLimitMultiplier;
   const effectiveMax = Math.max(0, Math.min(availableFunds, personalLimit));
+  const hasActiveLoan = activeLoans.length > 0;
+  const totalOwed = activeLoans.reduce((a, x) => a + x.stats.totalOwed, 0);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [insufficientOpen, setInsufficientOpen] = useState(false);
@@ -371,7 +378,7 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeLoanCount > 0) {
+    if (hasActiveLoan) {
       toast.error("You already have an active loan. Pay it off before applying for a new one.");
       return;
     }
@@ -447,16 +454,24 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
     <Card className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-primary/10 to-accent/10 p-5">
       <div>
         <h2 className="font-display text-lg font-semibold">Need a loan?</h2>
-        <p className="text-sm text-muted-foreground">
-          Submit an application. Available group funds:{" "}
-          <strong className="text-foreground">{money(availableFunds)}</strong>
-        </p>
+        {hasActiveLoan ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              You have an active loan. Pay it down to apply again.
+            </p>
+            <p className="mt-2 text-sm">
+              Outstanding: <strong className="font-display tabular-nums text-destructive">{money(totalOwed)}</strong>
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Submit an application. Available group funds:{" "}
+            <strong className="text-foreground">{money(availableFunds)}</strong>
+          </p>
+        )}
       </div>
-      {activeLoanCount > 0 ? (
-        <div className="flex items-center gap-2 text-sm text-destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <span>You have an active loan — pay it off to apply again</span>
-        </div>
+      {hasActiveLoan ? (
+        <RepayLoanButton groupId={groupId} activeLoans={activeLoans} />
       ) : (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
