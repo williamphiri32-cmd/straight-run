@@ -32,12 +32,12 @@ function MembersPage() {
     queryKey: ["members", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, name, phone, email, auth_user_id, joined_at, contributions(amount)")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("treasurer_list_members");
       if (error) throw error;
-      return data;
+      return (data ?? []).map((m: any) => ({
+        ...m,
+        contributions: [{ amount: Number(m.total_contributions ?? 0) }],
+      }));
     },
   });
 
