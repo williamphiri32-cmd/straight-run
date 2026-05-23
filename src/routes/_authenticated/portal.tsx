@@ -577,6 +577,117 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
   );
 }
 
+function RepayLoanButton({ groupId, activeLoans }: { groupId: string; activeLoans: ActiveLoan[] }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [loanId, setLoanId] = useState<string>(activeLoans[0]?.loan.id ?? "");
+  const [mode, setMode] = useState<"half" | "full" | "custom">("full");
+  const [customAmount, setCustomAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const selected = activeLoans.find((x) => x.loan.id === loanId) ?? activeLoans[0];
+  const owed = selected?.stats.totalOwed ?? 0;
+  const halfOwed = Math.round((owed / 2) * 100) / 100;
+  const amount =
+    mode === "full" ? owed : mode === "half" ? halfOwed : Number(customAmount);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selected) return toast.error("Select a loan");
+    if (!paymentMethod) return toast.error("Select a payment method");
+    if (!Number.isFinite(amount) || amount <= 0) return toast.error("Enter a valid amount");
+    if (amount > owed + 0.01) return toast.error(`Amount cannot exceed ${money(owed)}`);
+    setSubmitting(true);
+    const { error } = await supabase.from("repayments").insert({
+      user_id: groupId,
+      loan_id: selected.loan.id,
+      amount,
+      payment_method: paymentMethod,
+    });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Repayment recorded");
+    setOpen(false);
+    setCustomAmount("");
+    setMode("full");
+    setPaymentMethod("");
+    qc.invalidateQueries({ queryKey: ["portal"] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <HandCoins className="h-4 w-4" /> Repay loan
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Repay loan</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          {activeLoans.length > 1 && (
+            <div className="space-y-1.5">
+              <Label>Loan</Label>
+              <Select value={loanId} onValueChange={setLoanId}>
+                <SelectTrigger><SelectValue placeholder="Select loan" /></SelectTrigger>
+                <SelectContent>
+                  {activeLoans.map((x) => (
+                    <SelectItem key={x.loan.id} value={x.loan.id}>
+                      {money(x.stats.principal)} principal · {money(x.stats.totalOwed)} owed
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="rounded-md bg-muted p-3 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Outstanding</span><span className="font-display tabular-nums">{money(owed)}</span></div>
+            {selected?.stats.penalty ? (
+              <div className="flex justify-between text-xs text-destructive"><span>Includes penalty</span><span className="tabular-nums">{money(selected.stats.penalty)}</span></div>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Payment option</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Button type="button" variant={mode === "half" ? "default" : "outline"} onClick={() => setMode("half")} className="flex-col h-auto py-2">
+                <span className="text-xs">Half</span>
+                <span className="text-[11px] opacity-80 tabular-nums">{money(halfOwed)}</span>
+              </Button>
+              <Button type="button" variant={mode === "full" ? "default" : "outline"} onClick={() => setMode("full")} className="flex-col h-auto py-2">
+                <span className="text-xs">Full</span>
+                <span className="text-[11px] opacity-80 tabular-nums">{money(owed)}</span>
+              </Button>
+              <Button type="button" variant={mode === "custom" ? "default" : "outline"} onClick={() => setMode("custom")} className="flex-col h-auto py-2">
+                <span className="text-xs">Custom</span>
+              </Button>
+            </div>
+          </div>
+          {mode === "custom" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="r-amount">Custom amount</Label>
+              <Input id="r-amount" type="number" min="1" max={owed} step="0.01" required value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} />
+              <p className="text-[11px] text-muted-foreground">Max {money(owed)}</p>
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label>Payment method</Label>
+            <PaymentMethodSelect value={paymentMethod} onChange={setPaymentMethod} />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Saving…" : `Pay ${money(Number.isFinite(amount) && amount > 0 ? amount : 0)}`}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
 function ContributeCard({ memberId, groupId, mySavings, groupSavings }: { memberId: string; groupId: string; mySavings: number; groupSavings: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
