@@ -160,9 +160,16 @@ function MembersPage() {
                     )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Saved</p>
-                  <p className="font-display tabular-nums">{money(total)}</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Saved</p>
+                    <p className="font-display tabular-nums">{money(total)}</p>
+                  </div>
+                  <EditMemberEmailButton
+                    memberId={m.id}
+                    currentEmail={m.email}
+                    onSaved={() => qc.invalidateQueries({ queryKey: ["members"] })}
+                  />
                 </div>
               </Card>
             );
