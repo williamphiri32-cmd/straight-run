@@ -766,6 +766,7 @@ export type Database = {
     Functions: {
       my_group_ids: { Args: never; Returns: string[] }
       my_member_ids: { Args: never; Returns: string[] }
+      relink_pending_members: { Args: never; Returns: number }
       treasurer_list_members: {
         Args: never
         Returns: {
