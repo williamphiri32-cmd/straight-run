@@ -180,3 +180,65 @@ function MembersPage() {
   );
 }
 
+function EditMemberEmailButton({
+  memberId,
+  currentEmail,
+  onSaved,
+}: {
+  memberId: string;
+  currentEmail: string | null;
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState(currentEmail ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const next = email.trim() ? email.trim().toLowerCase() : null;
+    const { error } = await supabase
+      .from("members")
+      .update({ email: next })
+      .eq("id", memberId);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Email updated — will link automatically if it matches a signed-up user");
+    setOpen(false);
+    onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">Edit</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit member email</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={save} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor={`em-${memberId}`}>Email</Label>
+            <Input
+              id={`em-${memberId}`}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="member@example.com"
+            />
+            <p className="text-xs text-muted-foreground">
+              Must exactly match the email they sign in with.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
