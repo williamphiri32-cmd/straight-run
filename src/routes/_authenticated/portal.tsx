@@ -462,6 +462,9 @@ function ApplyForLoanCard({ memberId, groupId, availableFunds, maxTenure, mySavi
             <p className="mt-2 text-sm">
               Outstanding: <strong className="font-display tabular-nums text-destructive">{money(totalOwed)}</strong>
             </p>
+            <p className="mt-1 text-sm">
+              Group balance: <strong className="font-display tabular-nums text-foreground">{money(availableFunds)}</strong>
+            </p>
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
